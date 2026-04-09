@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>흥진파트너스 전자결재 v0.9</title>
+    <title>흥진파트너스 전자결재 v1.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +18,6 @@
         .num-font { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* 줌 시스템 */
         #zoom-wrapper { transition: transform 0.2s; transform-origin: top center; }
         
         .a4-paper {
@@ -32,7 +31,6 @@
         .hwp-full-footer th, .hwp-full-footer td { border-bottom: 1px solid #EEE; padding: 6px 4px; text-align: left; }
         .hwp-full-footer th { font-weight: bold; color: #444; width: 60px; }
 
-        /* [수정] 라이트모드 텍스트 시인성 */
         .tab-btn { color: #636366; }
         body:not(.dark-mode) .tab-btn:not(.active) { color: #1C1C1E; font-weight: 600; }
         .tab-btn.active { color: var(--accent); background: rgba(0, 122, 255, 0.1); }
@@ -40,8 +38,91 @@
         .mobile-nav { position: fixed; bottom: 0; width: 100%; background: var(--card-bg); border-top: 0.5px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0 calc(12px + env(safe-area-inset-bottom)); z-index: 100; backdrop-filter: blur(20px); }
         .mobile-nav button { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #8E8E93; }
         .mobile-nav button.active { color: var(--accent); }
+
+        /* 결재라인 테이블 */
+        .approval-line-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .approval-line-table td { border: 1px solid #999; padding: 6px 10px; text-align: center; font-size: 12px; }
+        .approval-line-table .role-cell { background: #f5f5f5; font-weight: bold; color: #444; font-size: 11px; }
+        .approval-line-table .name-cell { min-height: 40px; font-size: 14px; }
+        .approval-line-table .name-cell.approved { font-weight: bold; }
+
+        /* 로그인 화면 */
+        #login-screen { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); display: flex; align-items: center; justify-content: center; }
+        #login-screen.hidden { display: none; }
+        .login-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 48px 40px; width: 100%; max-width: 400px; }
+
+        /* 알림 배지 */
+        .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; background: #EF4444; color: white; border-radius: 9px; font-size: 10px; font-weight: 900; padding: 0 4px; }
+
+        /* 사용자 카드 */
+        .user-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: white; }
+
+        /* 공람 배지 */
+        .circular-badge { display: inline-block; background: #7C3AED20; color: #7C3AED; border: 1px solid #7C3AED40; border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 800; }
     </style>
 </head>
+
+<!-- ==================== 로그인 화면 ==================== -->
+<div id="login-screen">
+    <div class="login-card">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-black tracking-tighter text-white">HEUNGJIN</h1>
+            <p class="text-xs font-bold text-white/40 uppercase tracking-widest mt-1">Electronic Approval System</p>
+        </div>
+        
+        <div id="login-view">
+            <div class="space-y-3 mb-6">
+                <input type="text" id="login-id" placeholder="아이디" class="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm font-bold">
+                <input type="password" id="login-pw" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()" class="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm font-bold">
+            </div>
+            <button onclick="doLogin()" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black transition shadow-lg">로그인</button>
+            <div class="flex justify-between mt-4">
+                <button onclick="showLoginView('find-pw')" class="text-white/40 hover:text-white/70 text-xs font-bold transition">비밀번호 찾기</button>
+                <button onclick="showLoginView('request-id')" class="text-white/40 hover:text-white/70 text-xs font-bold transition">계정 신청</button>
+            </div>
+            <div id="login-error" class="hidden mt-3 text-red-400 text-xs font-bold text-center"></div>
+        </div>
+
+        <div id="find-pw-view" class="hidden">
+            <p class="text-white/60 text-sm mb-4 font-bold">가입 시 등록한 이메일로 임시 비밀번호를 발송합니다.</p>
+            <div class="space-y-3 mb-4">
+                <input type="text" id="fp-id" placeholder="아이디" class="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm font-bold">
+                <input type="email" id="fp-email" placeholder="이메일" class="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm font-bold">
+            </div>
+            <button onclick="doFindPw()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black">임시 비밀번호 발송</button>
+            <button onclick="showLoginView('login')" class="w-full mt-3 py-3 text-white/40 hover:text-white/70 text-xs font-bold transition">← 로그인으로</button>
+            <div id="fp-msg" class="hidden mt-3 text-green-400 text-xs font-bold text-center"></div>
+        </div>
+
+        <div id="request-id-view" class="hidden">
+            <p class="text-white/60 text-xs mb-4 font-bold">계정 신청 후 관리자 승인을 받아야 합니다.</p>
+            <div class="space-y-2 mb-4">
+                <input type="text" id="req-name" placeholder="실명" class="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm">
+                <input type="text" id="req-id" placeholder="원하는 아이디" class="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm">
+                <input type="password" id="req-pw" placeholder="비밀번호" class="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm">
+                <input type="text" id="req-phone" placeholder="전화번호" class="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm">
+                <input type="email" id="req-email" placeholder="이메일" class="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm">
+                <input type="text" id="req-title" placeholder="직함 (예: 과장, 팀장)" class="w-full p-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm">
+            </div>
+            <button onclick="doRequestId()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black">계정 신청</button>
+            <button onclick="showLoginView('login')" class="w-full mt-3 py-3 text-white/40 hover:text-white/70 text-xs font-bold transition">← 로그인으로</button>
+            <div id="req-msg" class="hidden mt-3 text-green-400 text-xs font-bold text-center"></div>
+        </div>
+
+        <!-- 비밀번호 재설정 (임시PW 로그인 후) -->
+        <div id="reset-pw-view" class="hidden">
+            <p class="text-white/60 text-sm mb-4 font-bold">임시 비밀번호로 로그인했습니다.<br>새 비밀번호를 설정해주세요.</p>
+            <div class="space-y-3 mb-4">
+                <input type="password" id="new-pw1" placeholder="새 비밀번호" class="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm font-bold">
+                <input type="password" id="new-pw2" placeholder="새 비밀번호 확인" class="w-full p-4 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/40 outline-none focus:border-blue-400 text-sm font-bold">
+            </div>
+            <button onclick="doResetPw()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black">비밀번호 변경</button>
+            <div id="reset-msg" class="hidden mt-3 text-red-400 text-xs font-bold text-center"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 메인 앱 ==================== -->
 <body class="flex flex-col md:flex-row h-screen overflow-hidden">
 
     <aside class="hidden md:flex flex-col w-64 bg-[var(--sidebar-bg)] border-r border-[var(--border)] p-5 shrink-0 z-30 transition-colors">
@@ -49,28 +130,44 @@
             <h1 class="text-2xl font-black tracking-tighter" style="color: var(--accent)">HEUNGJIN</h1>
             <p class="text-[10px] font-bold opacity-50 uppercase tracking-widest">Electronic Approval</p>
         </div>
-        <nav class="flex-1 space-y-1">
+        <nav class="flex-1 space-y-1" id="sidebar-nav">
             <button onclick="changeTab('dashboard')" class="tab-btn active w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition font-bold" id="pc-dashboard"><i data-lucide="layout-dashboard"></i><span>대시보드</span></button>
             <button onclick="changeTab('approval')" class="tab-btn w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition font-bold" id="pc-approval"><i data-lucide="file-check-2"></i><span>전체 문서함</span></button>
+            <!-- 마스터 전용 메뉴 -->
+            <button onclick="changeTab('users')" class="tab-btn w-full hidden items-center justify-between px-3 py-3 rounded-xl transition font-bold" id="pc-users">
+                <span class="flex items-center space-x-3"><i data-lucide="users"></i><span>사용자 관리</span></span>
+                <span id="pending-badge" class="badge hidden">0</span>
+            </button>
             <button onclick="changeTab('settings')" class="tab-btn w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition font-bold" id="pc-settings"><i data-lucide="settings"></i><span>결재 설정</span></button>
         </nav>
-        <button onclick="toggleTheme()" class="mt-auto flex items-center justify-between p-3 rounded-xl bg-[var(--toggle-bg)] border border-[var(--border)] text-[var(--text-main)] shadow-sm">
-            <span class="text-xs font-bold" id="theme-label">라이트 모드</span><i data-lucide="sun" class="w-4 h-4" id="theme-icon"></i>
-        </button>
+        <div class="mt-auto space-y-2">
+            <div class="p-3 rounded-xl bg-[var(--toggle-bg)] border border-[var(--border)] flex items-center space-x-3">
+                <div id="sidebar-avatar" class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-xs shadow"></div>
+                <div class="flex-1 min-w-0">
+                    <p id="sidebar-name" class="text-xs font-black truncate"></p>
+                    <p id="sidebar-role" class="text-[10px] opacity-50 truncate"></p>
+                </div>
+                <button onclick="doLogout()" title="로그아웃"><i data-lucide="log-out" class="w-4 h-4 opacity-50 hover:opacity-100"></i></button>
+            </div>
+            <button onclick="toggleTheme()" class="w-full flex items-center justify-between p-3 rounded-xl bg-[var(--toggle-bg)] border border-[var(--border)] text-[var(--text-main)] shadow-sm">
+                <span class="text-xs font-bold" id="theme-label">라이트 모드</span><i data-lucide="sun" class="w-4 h-4" id="theme-icon"></i>
+            </button>
+        </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <header class="bg-[var(--card-bg)] border-b border-[var(--border)] px-6 py-3 flex justify-between items-center z-40 shadow-sm">
             <h2 class="text-sm font-black opacity-80 uppercase tracking-tight">유한책임회사 흥진파트너스</h2>
             <div class="flex items-center space-x-3">
-                <span class="text-[10px] font-black bg-blue-600/10 text-blue-600 border border-blue-600/20 px-2 py-1 rounded">v0.9</span>
+                <span class="text-[10px] font-black bg-blue-600/10 text-blue-600 border border-blue-600/20 px-2 py-1 rounded">v1.0</span>
                 <button onclick="toggleTheme()" class="md:hidden p-2 rounded-full bg-[var(--toggle-bg)]"><i data-lucide="sun" class="w-4 h-4 text-orange-500"></i></button>
-                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-xs shadow-md">JW</div>
+                <div id="header-avatar" class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-black text-xs shadow-md cursor-pointer" onclick="changeTab('settings')"></div>
             </div>
         </header>
 
         <div id="content" class="flex-1 overflow-y-auto p-4 md:p-8 pb-32 no-scrollbar bg-[var(--bg-main)]">
             
+            <!-- 대시보드 -->
             <section id="tab-dashboard" class="content-section max-w-5xl mx-auto space-y-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div class="bg-[var(--card-bg)] p-6 rounded-3xl border border-[var(--border)] shadow-sm cursor-pointer" onclick="changeTab('approval')">
@@ -84,6 +181,7 @@
                 </div>
             </section>
 
+            <!-- 전체 문서함 -->
             <section id="tab-approval" class="content-section hidden max-w-7xl mx-auto space-y-6">
                 <div class="flex flex-col md:flex-row justify-between md:items-end gap-4">
                     <h3 class="text-2xl font-black text-[var(--text-main)]">전체 문서함</h3>
@@ -107,6 +205,7 @@
                                     <th class="p-4">번호 / 제목 / 태그</th>
                                     <th class="p-4 text-center">기안일</th>
                                     <th class="p-4 text-center text-blue-500">결재일</th>
+                                    <th class="p-4 text-center">기안자</th>
                                 </tr>
                             </thead>
                             <tbody id="approval-list" class="divide-y divide-[var(--border)]"></tbody>
@@ -115,20 +214,76 @@
                 </div>
             </section>
 
+            <!-- 사용자 관리 (마스터 전용) -->
+            <section id="tab-users" class="content-section hidden max-w-5xl mx-auto space-y-6">
+                <div class="flex flex-col md:flex-row justify-between md:items-end gap-4">
+                    <h3 class="text-2xl font-black text-[var(--text-main)]">사용자 관리</h3>
+                    <button onclick="openModal('create-user-modal')" class="bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg flex items-center hover:bg-blue-700">
+                        <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i>사용자 직접 생성
+                    </button>
+                </div>
+
+                <!-- 계정 신청 대기 -->
+                <div id="pending-requests-section" class="hidden">
+                    <h4 class="text-sm font-black opacity-50 uppercase tracking-widest mb-3">계정 신청 대기</h4>
+                    <div id="pending-list" class="space-y-3"></div>
+                </div>
+
+                <!-- 사용자 목록 -->
+                <div>
+                    <h4 class="text-sm font-black opacity-50 uppercase tracking-widest mb-3">등록된 사용자</h4>
+                    <div id="user-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+            </section>
+
+            <!-- 결재 설정 -->
             <section id="tab-settings" class="content-section hidden max-w-2xl mx-auto space-y-4">
                 <h3 class="text-2xl font-black">결재 설정</h3>
-                <div class="bg-[var(--card-bg)] p-6 rounded-3xl border border-[var(--border)] space-y-6 shadow-sm">
-                    <div>
-                        <label class="font-bold text-xs opacity-50 block mb-2 uppercase">전자결재 암호</label>
-                        <div class="flex space-x-2">
-                            <input type="password" id="set-approve-pw" placeholder="비밀번호 변경" class="flex-1 p-3 border rounded-xl bg-slate-500/5 outline-none">
-                            <button onclick="updatePassword()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">변경</button>
-                        </div>
+                
+                <!-- 내 정보 -->
+                <div class="bg-[var(--card-bg)] p-6 rounded-3xl border border-[var(--border)] space-y-4 shadow-sm">
+                    <h4 class="font-black text-sm opacity-50 uppercase tracking-widest">내 정보</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="text-xs font-bold opacity-50 block mb-1">이름</label><p id="my-name-display" class="font-bold text-sm"></p></div>
+                        <div><label class="text-xs font-bold opacity-50 block mb-1">직함</label><p id="my-title-display" class="font-bold text-sm"></p></div>
+                        <div><label class="text-xs font-bold opacity-50 block mb-1">사번</label><p id="my-empno-display" class="font-bold text-sm num-font"></p></div>
+                        <div><label class="text-xs font-bold opacity-50 block mb-1">이메일</label><p id="my-email-display" class="font-bold text-sm truncate"></p></div>
                     </div>
-                    <div class="pt-6 border-t border-[var(--border)]">
-                        <label class="font-bold text-xs opacity-50 block mb-2 uppercase">직인 등록</label>
-                        <input type="file" onchange="handleSealRegister(this)" class="text-xs text-slate-500 border border-[var(--border)] p-4 rounded-xl w-full">
+                </div>
+
+                <!-- 비밀번호 변경 -->
+                <div class="bg-[var(--card-bg)] p-6 rounded-3xl border border-[var(--border)] space-y-4 shadow-sm">
+                    <h4 class="font-black text-sm opacity-50 uppercase tracking-widest">비밀번호 변경</h4>
+                    <div class="space-y-2">
+                        <input type="password" id="set-old-pw" placeholder="현재 비밀번호" class="w-full p-3 border rounded-xl bg-slate-500/5 outline-none focus:border-blue-500">
+                        <input type="password" id="set-new-pw1" placeholder="새 비밀번호" class="w-full p-3 border rounded-xl bg-slate-500/5 outline-none focus:border-blue-500">
+                        <input type="password" id="set-new-pw2" placeholder="새 비밀번호 확인" class="w-full p-3 border rounded-xl bg-slate-500/5 outline-none focus:border-blue-500">
                     </div>
+                    <button onclick="updateMyPassword()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">변경</button>
+                </div>
+
+                <!-- 전자결재 승인 비밀번호 -->
+                <div class="bg-[var(--card-bg)] p-6 rounded-3xl border border-[var(--border)] space-y-4 shadow-sm">
+                    <h4 class="font-black text-sm opacity-50 uppercase tracking-widest">전자결재 승인 비밀번호</h4>
+                    <div class="flex space-x-2">
+                        <input type="password" id="set-approve-pw" placeholder="새 승인 비밀번호" class="flex-1 p-3 border rounded-xl bg-slate-500/5 outline-none">
+                        <button onclick="updatePassword()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold">변경</button>
+                    </div>
+                </div>
+
+                <!-- 직인 등록 -->
+                <div class="bg-[var(--card-bg)] p-6 rounded-3xl border border-[var(--border)] space-y-4 shadow-sm">
+                    <h4 class="font-black text-sm opacity-50 uppercase tracking-widest">직인 등록</h4>
+                    <input type="file" onchange="handleSealRegister(this)" class="text-xs text-slate-500 border border-[var(--border)] p-4 rounded-xl w-full">
+                </div>
+
+                <!-- 결재라인 템플릿 관리 -->
+                <div class="bg-[var(--card-bg)] p-6 rounded-3xl border border-[var(--border)] space-y-4 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-black text-sm opacity-50 uppercase tracking-widest">결재라인 템플릿</h4>
+                        <button onclick="openModal('approval-line-modal')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold">+ 추가</button>
+                    </div>
+                    <div id="approval-line-list" class="space-y-2"></div>
                 </div>
             </section>
         </div>
@@ -136,10 +291,12 @@
         <nav class="mobile-nav md:hidden">
             <button onclick="changeTab('dashboard')" id="mob-dashboard" class="active"><i data-lucide="layout-dashboard"></i><span class="text-[10px] font-bold">홈</span></button>
             <button onclick="changeTab('approval')" id="mob-approval"><i data-lucide="file-check-2"></i><span class="text-[10px] font-bold">문서함</span></button>
+            <button onclick="changeTab('users')" id="mob-users" class="hidden"><i data-lucide="users"></i><span class="text-[10px] font-bold">사용자</span></button>
             <button onclick="changeTab('settings')" id="mob-settings"><i data-lucide="settings"></i><span class="text-[10px] font-bold">설정</span></button>
         </nav>
     </main>
 
+    <!-- ==================== 문서 뷰어/기안 모달 ==================== -->
     <div id="wysiwyg-modal" class="modal-bg fixed inset-0 bg-black/90 hidden items-start justify-center p-0 z-[1000] overflow-hidden" onclick="if(event.target === this) closeModal('wysiwyg-modal')">
         <div class="relative w-full h-full flex flex-col">
             <div class="w-full bg-slate-900 text-white p-3 md:p-4 flex justify-between items-center shadow-2xl relative z-[1100]">
@@ -154,6 +311,7 @@
                 <div class="flex items-center space-x-2">
                     <button onclick="saveCurrentToPDF()" id="btn-download-single" class="bg-slate-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-600 flex items-center transition-colors"><i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i>PDF</button>
                     <button id="btn-edit-tag" onclick="toggleTagEdit()" class="text-[10px] font-bold bg-blue-500/20 text-blue-400 px-3 py-2 rounded-xl border border-blue-400/20">태그관리</button>
+                    <button id="btn-circular" onclick="openModal('circular-modal')" class="hidden text-[10px] font-bold bg-purple-500/20 text-purple-400 px-3 py-2 rounded-xl border border-purple-400/20">공람</button>
                     <button id="btn-approve" onclick="openPasswordModal()" class="hidden bg-emerald-600 px-4 py-2 rounded-xl text-xs font-black">승인</button>
                     <button onclick="closeModal('wysiwyg-modal')" class="text-xs font-bold opacity-50 px-3 py-2">닫기</button>
                     <button id="btn-save" onclick="submitWysiwyg()" class="bg-blue-600 px-5 py-2 rounded-xl text-xs font-black shadow-lg">상신</button>
@@ -176,11 +334,21 @@
 
                             <table class="w-full mb-10 text-[15px]">
                                 <tr><th class="text-left w-20 py-2 text-black/30 uppercase text-[9px] font-black">수 신</th><td id="w-target" contenteditable="true" class="border-b border-slate-200 outline-none">주식회사 디딤이앤에프</td></tr>
-                                <tr><th class="text-left w-20 py-2 text-black/30 uppercase text-[9px] font-black">제 목</th><td id="w-title" contenteditable="true" class="font-black text-xl border-b-2 border-black outline-none py-2">제9회차 전환사채 조기상환청구</td></tr>
+                                <tr><th class="text-left w-20 py-2 text-black/30 uppercase text-[9px] font-black">제 목</th><td id="w-title" contenteditable="true" class="font-black text-xl border-b-2 border-black outline-none py-2">제목을 입력하세요</td></tr>
                             </table>
                             <div id="w-content" contenteditable="true" class="w-full outline-none min-h-[450px] text-[16px] leading-[1.8] whitespace-pre-wrap py-4"></div>
-                            <div class="mt-auto relative flex flex-col items-center py-10">
+
+                            <!-- 공람자 표시 -->
+                            <div id="w-circular-area" class="hidden mt-4 p-3 bg-purple-50 rounded-xl border border-purple-100">
+                                <p class="text-[10px] font-bold text-purple-500 uppercase tracking-widest mb-2">공람</p>
+                                <div id="w-circular-names" class="flex flex-wrap gap-2"></div>
+                            </div>
+
+                            <!-- 결재라인 -->
+                            <div class="mt-auto relative flex flex-col items-center py-6">
                                 <div class="relative"><h2 class="text-[32px] font-black tracking-[0.4em]">유한책임회사 흥진파트너스</h2><div id="w-seal-area" class="hidden absolute right-[-20px] top-[-15px] w-[95px] h-[95px] flex items-center justify-center mix-blend-multiply"><div id="w-seal-text" class="border-4 border-red-600 text-red-600 rounded-full w-full h-full flex items-center justify-center font-black text-[20px] rotate-[-12deg] bg-white/50 opacity-80 shadow-inner">직인<br>생략</div><img id="w-seal-img" class="w-full h-full object-contain rotate-[-12deg] hidden"></div></div>
+                                <!-- 결재라인 테이블 -->
+                                <div id="w-approval-line" class="mt-4 w-full max-w-md"></div>
                             </div>
                         </div>
 
@@ -191,7 +359,7 @@
                             <tr><th>접수</th><td></td><th>기안일</th><td id="w-meta-date"></td></tr>
                             <tr><th>우편번호</th><td colspan="3">06574 서울시 서초구 방배로 268, 204호</td></tr>
                             <tr><th>전화</th><td>010-3928-6944</td><th>전송</th><td>0504-046-2946</td></tr>
-                            <tr><th>이메일</th><td>ceo@hjpartners.co.kr</td><th>홈페이지</th><td>www.hjpartners.co.kr</td></tr>
+                            <tr><th>이메일</th><td>hjpartners@hjpartners.co.kr</td><th>홈페이지</th><td>www.hjpartners.co.kr</td></tr>
                         </table>
                     </div>
                 </div>
@@ -199,6 +367,7 @@
         </div>
     </div>
 
+    <!-- 승인 비밀번호 모달 -->
     <div id="password-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[2000]">
         <div class="bg-white p-8 rounded-3xl w-80 text-center shadow-2xl">
             <h4 class="font-black text-xl mb-4 text-black">승인 비밀번호</h4>
@@ -207,6 +376,7 @@
         </div>
     </div>
 
+    <!-- 오프라인 문서 모달 -->
     <div id="offline-modal" class="modal-bg fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-[500]" onclick="if(event.target === this) closeModal('offline-modal')">
         <div class="bg-[var(--card-bg)] border border-[var(--border)] w-full max-w-md p-6 rounded-3xl shadow-2xl">
             <h4 class="text-xl font-bold mb-6 text-[var(--text-main)]">오프라인 문서 등재</h4>
@@ -220,177 +390,952 @@
         </div>
     </div>
 
-    <script>
-        // --- DATA ---
-        let docs = [{ id: 1, docNo: '2024070301', title: '제9회차 전환사채 조기상환청구 안내', draftDate: '2024-07-03', approveDate: '2024-07-03', status: '결재완료', content: '조기상환 청구 본문...', tag: '디딤이앤에프', isOffline: false }];
-        let currentDocId = null;
-        let approvalPassword = '1234';
-        let registeredSeal = '';
-        let tempOfflineUrl = null;
-        let currentZoom = 1.0;
-        const TODAY = new Date('2026-04-09');
+    <!-- 사용자 생성 모달 -->
+    <div id="create-user-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[500]" onclick="if(event.target===this)closeModal('create-user-modal')">
+        <div class="bg-[var(--card-bg)] border border-[var(--border)] w-full max-w-md p-6 rounded-3xl shadow-2xl">
+            <h4 class="text-xl font-bold mb-5 text-[var(--text-main)]">사용자 직접 생성</h4>
+            <div class="space-y-3">
+                <input type="text" id="cu-name" placeholder="실명 *" class="w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)]">
+                <input type="text" id="cu-id" placeholder="아이디 *" class="w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)]">
+                <input type="password" id="cu-pw" placeholder="초기 비밀번호 *" class="w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)]">
+                <input type="text" id="cu-title" placeholder="직함 (예: 과장)" class="w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)]">
+                <input type="text" id="cu-phone" placeholder="전화번호" class="w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)]">
+                <input type="email" id="cu-email" placeholder="이메일" class="w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)]">
+            </div>
+            <div id="cu-err" class="hidden mt-2 text-red-500 text-xs font-bold"></div>
+            <div class="flex space-x-2 mt-5">
+                <button onclick="closeModal('create-user-modal')" class="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-700">취소</button>
+                <button onclick="createUser()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold">생성</button>
+            </div>
+        </div>
+    </div>
 
-        // --- CORE UI ---
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            document.getElementById('theme-label').innerText = isDark ? 'Dark Mode' : 'Light Mode';
-            document.querySelectorAll('#theme-icon').forEach(el => el.setAttribute('data-lucide', isDark ? 'moon' : 'sun'));
-            lucide.createIcons();
-        }
+    <!-- 사용자 상세 모달 -->
+    <div id="user-detail-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[500]" onclick="if(event.target===this)closeModal('user-detail-modal')">
+        <div class="bg-[var(--card-bg)] border border-[var(--border)] w-full max-w-lg p-6 rounded-3xl shadow-2xl">
+            <div id="user-detail-content"></div>
+        </div>
+    </div>
 
-        function changeTab(tab) {
-            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-            document.getElementById('tab-' + tab).classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('pc-' + tab)?.classList.add('active');
-            document.querySelectorAll('.mobile-nav button').forEach(b => b.classList.remove('active'));
-            document.getElementById('mob-' + (tab==='settings'?'settings':tab))?.classList.add('active');
-        }
+    <!-- 사용자 로그 모달 -->
+    <div id="user-log-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[600]" onclick="if(event.target===this)closeModal('user-log-modal')">
+        <div class="bg-[var(--card-bg)] border border-[var(--border)] w-full max-w-xl p-6 rounded-3xl shadow-2xl max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="font-black text-lg text-[var(--text-main)]" id="log-modal-title">활동 로그</h4>
+                <button onclick="closeModal('user-log-modal')" class="text-xs opacity-50">닫기</button>
+            </div>
+            <div id="user-log-list" class="overflow-y-auto flex-1 space-y-2 no-scrollbar"></div>
+        </div>
+    </div>
 
-        // --- ZOOM SYSTEM (v0.9 Default 100%) ---
-        function setZoom(val) {
-            currentZoom = parseFloat(val);
-            document.getElementById('zoom-wrapper').style.transform = `scale(${currentZoom})`;
-            document.getElementById('zoom-val').innerText = Math.round(currentZoom * 100);
-        }
-        function adjustZoom(delta) { setZoom(currentZoom + delta); }
+    <!-- 공람 모달 -->
+    <div id="circular-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[500]" onclick="if(event.target===this)closeModal('circular-modal')">
+        <div class="bg-[var(--card-bg)] border border-[var(--border)] w-full max-w-md p-6 rounded-3xl shadow-2xl">
+            <h4 class="text-xl font-bold mb-5 text-[var(--text-main)]">공람 설정</h4>
+            <p class="text-xs opacity-50 mb-4">공람할 사용자를 선택하면 해당 문서를 열람할 수 있습니다.</p>
+            <div id="circular-user-list" class="space-y-2 max-h-60 overflow-y-auto no-scrollbar"></div>
+            <div class="flex space-x-2 mt-5">
+                <button onclick="closeModal('circular-modal')" class="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-700">취소</button>
+                <button onclick="saveCircular()" class="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold">저장</button>
+            </div>
+        </div>
+    </div>
 
-        // --- ACTIONS ---
-        function renderDocs() {
-            const query = document.getElementById('doc-search').value.toLowerCase();
-            const filtered = docs.filter(d => d.title.toLowerCase().includes(query) || (d.tag && d.tag.toLowerCase().includes(query)));
-            
-            document.getElementById('approval-list').innerHTML = filtered.map(d => `
-                <tr class="hover:bg-slate-500/5 cursor-pointer transition" onclick="if(event.target.type !== 'checkbox') openDocViewer(${d.id})">
-                    <td class="p-4 text-center"><input type="checkbox" class="doc-check" value="${d.id}"></td>
-                    <td class="p-4 text-center"><span class="px-2 py-1 rounded text-[10px] font-black ${d.status==='결재완료'?'bg-slate-500/10 text-slate-500 dark:bg-slate-800':'bg-orange-500/20 text-orange-500'}">${d.status}</span></td>
-                    <td class="p-4 text-xs opacity-40 font-bold num-font">${d.docNo}</td>
-                    <td class="p-4"><div class="font-bold text-[var(--text-main)]">${d.title}</div>${d.tag ? `<span class="tag-badge mt-1 inline-block">#${d.tag}</span>` : ''}</td>
-                    <td class="p-4 text-center text-xs opacity-50 num-font">${d.draftDate}</td>
-                    <td class="p-4 text-center text-xs text-blue-500 font-bold num-font">${d.approveDate}</td>
-                </tr>`).join('');
-            
-            document.getElementById('dash-docs').innerHTML = docs.slice(0,3).map(d => `<div class="p-4 bg-slate-500/5 rounded-2xl flex justify-between items-center"><span class="text-sm font-bold opacity-80 truncate">${d.title}</span><span class="text-[10px] opacity-40 font-black">${d.draftDate}</span></div>`).join('');
-            lucide.createIcons();
-        }
+    <!-- 결재라인 템플릿 모달 -->
+    <div id="approval-line-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[500]" onclick="if(event.target===this)closeModal('approval-line-modal')">
+        <div class="bg-[var(--card-bg)] border border-[var(--border)] w-full max-w-md p-6 rounded-3xl shadow-2xl">
+            <h4 class="text-xl font-bold mb-5 text-[var(--text-main)]">결재라인 템플릿 추가</h4>
+            <div class="space-y-3">
+                <input type="text" id="al-name" placeholder="템플릿 이름 (예: 기본결재)" class="w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)]">
+                <p class="text-xs opacity-50 font-bold">결재자 순서 (쉼표로 구분, 아이디 입력)</p>
+                <div id="al-approvers" class="space-y-2">
+                    <input type="text" placeholder="결재자 아이디 1" class="al-approver-input w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)] text-sm">
+                    <input type="text" placeholder="결재자 아이디 2" class="al-approver-input w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)] text-sm">
+                </div>
+                <button onclick="addApproverInput()" class="text-xs text-blue-500 font-bold">+ 결재자 추가</button>
+            </div>
+            <div class="flex space-x-2 mt-5">
+                <button onclick="closeModal('approval-line-modal')" class="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-700">취소</button>
+                <button onclick="saveApprovalLineTemplate()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold">저장</button>
+            </div>
+        </div>
+    </div>
 
-        function openWysiwygDraft() {
-            currentDocId = null; setZoom(1.0); // 기안 시 100%
-            document.getElementById('v-mode-title').innerText = "ONLINE DRAFT";
-            document.getElementById('w-title').innerText = "여기에 제목을 입력하세요";
-            document.getElementById('w-content').innerText = "1. 귀사의 무궁한 발전을 기원합니다.\n\n2. \n\n끝.";
-            document.getElementById('doc-online-area').classList.remove('hidden');
-            document.getElementById('doc-offline-area').classList.add('hidden');
-            document.getElementById('w-seal-area').classList.add('hidden');
-            document.getElementById('btn-approve').classList.add('hidden');
-            document.getElementById('btn-save').classList.remove('hidden');
-            document.getElementById('w-paper').querySelectorAll('[contenteditable]').forEach(el => el.contentEditable = "true");
-            openModal('wysiwyg-modal');
-        }
+    <!-- 기안 시 결재라인 선택 모달 -->
+    <div id="select-approval-line-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-[1200]" onclick="if(event.target===this)closeModal('select-approval-line-modal')">
+        <div class="bg-[var(--card-bg)] border border-[var(--border)] w-full max-w-md p-6 rounded-3xl shadow-2xl">
+            <h4 class="text-xl font-bold mb-5 text-[var(--text-main)]">결재라인 선택</h4>
+            <div id="select-al-list" class="space-y-2 mb-5"></div>
+            <button onclick="closeModal('select-approval-line-modal')" class="w-full py-3 bg-slate-100 rounded-xl font-bold text-slate-700">닫기</button>
+        </div>
+    </div>
 
-        function openDocViewer(id) {
-            const d = docs.find(x => x.id === id); currentDocId = id;
-            setZoom(1.0); // 조회 시 기본 100%
-            const isDone = d.status === '결재완료';
-            
-            document.getElementById('v-mode-title').innerText = "VIEWER ("+d.status+")";
-            document.getElementById('w-title').innerText = d.title;
-            document.getElementById('w-content').innerText = d.content;
-            document.getElementById('w-meta-no').innerText = d.docNo;
-            document.getElementById('w-meta-date').innerText = d.draftDate;
-            document.getElementById('v-tag-content').innerText = d.tag ? `#${d.tag}` : '#미지정';
-
-            if(d.isOffline) {
-                document.getElementById('doc-online-area').classList.add('hidden');
-                document.getElementById('doc-offline-area').classList.remove('hidden');
-                document.getElementById('v-offline-img').src = d.content;
-            } else {
-                document.getElementById('doc-online-area').classList.remove('hidden');
-                document.getElementById('doc-offline-area').classList.add('hidden');
-            }
-
-            document.getElementById('w-seal-area').classList.toggle('hidden', !isDone);
-            if(isDone && registeredSeal) { document.getElementById('w-seal-img').src = registeredSeal; document.getElementById('w-seal-img').classList.remove('hidden'); document.getElementById('w-seal-text').classList.add('hidden'); }
-            
-            document.getElementById('btn-approve').classList.toggle('hidden', isDone);
-            document.getElementById('btn-save').classList.add('hidden');
-            document.getElementById('w-paper').querySelectorAll('[contenteditable]').forEach(el => el.contentEditable = !isDone);
-            openModal('wysiwyg-modal');
-        }
-
-        function submitWysiwyg() {
-            const date = TODAY.toISOString().split('T')[0];
-            const count = docs.filter(d => d.draftDate === date).length + 1;
-            const docNo = date.replace(/-/g,'') + String(count).padStart(2, '0');
-            docs.unshift({ id: Date.now(), docNo, status: '결재대기', draftDate: date, approveDate: '-', title: document.getElementById('w-title').innerText, content: document.getElementById('w-content').innerText, tag: "", isOffline: false });
-            closeModal('wysiwyg-modal'); renderDocs();
-        }
-
-        // --- PDF 다운로드 로직 (v0.9 복구) ---
-        async function saveCurrentToPDF() {
-            const { jsPDF } = window.jspdf;
-            const element = document.getElementById('w-paper');
-            const canvas = await html2canvas(element, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
-            pdf.save(`흥진_문서_${currentDocId}.pdf`);
-        }
-
-        async function downloadSelected() {
-            const checks = document.querySelectorAll('.doc-check:checked');
-            if(checks.length === 0) return alert('다운로드할 문서를 선택하세요.');
-            
-            alert(checks.length + '개의 문서를 순차적으로 생성합니다. 팝업 차단을 해제해 주세요.');
-            for(let check of checks) {
-                const docId = parseInt(check.value);
-                openDocViewer(docId);
-                await new Promise(r => setTimeout(r, 500)); // 렌더링 대기
-                await saveCurrentToPDF();
-            }
-        }
-
-        // --- OTHER UTILS ---
-        function toggleTagEdit() {
-            const d = docs.find(x => x.id === currentDocId);
-            const isEdit = document.getElementById('w-tag-input').classList.toggle('hidden');
-            if(isEdit) { // 저장 시
-                d.tag = document.getElementById('w-tag-input').value;
-                document.getElementById('v-tag-content').innerText = d.tag ? `#${d.tag}` : '#미지정';
-                document.getElementById('v-tag-content').classList.remove('hidden');
-                renderDocs();
-            } else { // 편집 시작
-                document.getElementById('w-tag-input').value = d.tag || "";
-                document.getElementById('v-tag-content').classList.add('hidden');
-            }
-        }
-
-        function handleOfflineFile(input) { if(input.files[0]) { tempOfflineUrl = URL.createObjectURL(input.files[0]); document.getElementById('off-file-name').innerText = input.files[0].name; } }
-        function submitOffline() {
-            const date = document.getElementById('off-date').value;
-            docs.unshift({ id: Date.now(), docNo: date.replace(/-/g,'')+'00', status: '결재완료', draftDate: date, approveDate: TODAY.toISOString().split('T')[0], title: '[오프라인] '+document.getElementById('off-title').value, content: tempOfflineUrl, tag: document.getElementById('off-tag').value, isOffline: true });
-            renderDocs(); closeModal('offline-modal');
-        }
-
-        function verifyAndApprove() { 
-            if(document.getElementById('approve-pw').value === approvalPassword) {
-                const d = docs.find(x => x.id === currentDocId); d.status = '결재완료'; d.approveDate = TODAY.toISOString().split('T')[0];
-                closeModal('password-modal'); renderDocs(); openDocViewer(d.id);
-            } else { alert('비밀번호 오류'); }
-        }
-
-        function handleSealRegister(input) { const reader = new FileReader(); reader.onload = e => { registeredSeal = e.target.result; alert('직인 등록 완료'); }; reader.readAsDataURL(input.files[0]); }
-        function updatePassword() { approvalPassword = document.getElementById('set-approve-pw').value; alert('변경 완료'); }
-        function toggleAll(src) { document.querySelectorAll('.doc-check').forEach(c => c.checked = src.checked); }
-        function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
-        function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
-        function renderTax() {
-            const list = [{d:'2026-04-25',t:'부가세 신고'},{d:'2026-05-10',t:'원천세 신고'},{d:'2026-05-31',t:'종합소득세'}];
-            document.getElementById('dash-tax-list').innerHTML = list.map(s => `<div class="p-3 bg-slate-500/5 border border-[var(--border)] rounded-2xl flex justify-between items-center"><div><p class="text-[10px] opacity-40 font-bold uppercase">${s.d}</p><p class="text-sm font-bold">${s.t}</p></div><span class="text-xs font-black text-red-500">D-${Math.ceil((new Date(s.d)-TODAY)/(1000*60*60*24))}</span></div>`).join('');
-        }
-
-        document.addEventListener('DOMContentLoaded', () => { renderDocs(); renderTax(); changeTab('dashboard'); lucide.createIcons(); });
-    </script>
 </body>
+
+<script>
+// ================================================================
+// 유틸: SHA-256 해시 (간단 구현, 실제로는 Web Crypto API 사용)
+// ================================================================
+async function hashPw(pw) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ================================================================
+// 데이터 계층: localStorage
+// ================================================================
+function loadData(key, def) { try { return JSON.parse(localStorage.getItem(key)) ?? def; } catch { return def; } }
+function saveData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+// ================================================================
+// 초기 데이터 구조
+// ================================================================
+// users: [{id, username, passwordHash, name, jobTitle, empNo, phone, email, isMaster, mustResetPw, createdAt}]
+// pendingRequests: [{id, username, passwordHash, name, jobTitle, phone, email, requestedAt}]
+// docs: [{id, docNo, status, draftDate, approveDate, title, content, tag, isOffline, drafterId, approvalLine:[{userId,name,jobTitle,approved}], circularUsers:[userId]}]
+// activityLogs: [{userId, action, detail, ts}]
+// approvalLineTemplates: [{id, name, approvers:[userId]}]
+
+const TODAY = new Date('2026-04-10');
+
+let users = loadData('hj_users', []);
+let pendingRequests = loadData('hj_pending', []);
+let docs = loadData('hj_docs', []);
+let activityLogs = loadData('hj_logs', []);
+let approvalLineTemplates = loadData('hj_al_templates', []);
+let registeredSeal = loadData('hj_seal', '');
+let approvalPassword = loadData('hj_approve_pw', '1234');
+let currentDocId = null;
+let currentZoom = 1.0;
+let tempOfflineUrl = null;
+let currentUser = null; // 로그인된 사용자 (sessionStorage)
+
+// ================================================================
+// 마스터 계정 초기화
+// ================================================================
+async function initMaster() {
+    if (users.length === 0) {
+        const hash = await hashPw('master1234');
+        users = [{
+            id: 'master',
+            username: 'master',
+            passwordHash: hash,
+            name: '김진홍',
+            jobTitle: '대표이사',
+            empNo: 'EMP-001',
+            phone: '010-3928-6944',
+            email: 'hjpartners@hjpartners.co.kr',
+            isMaster: true,
+            mustResetPw: false,
+            createdAt: '2024-01-01'
+        }];
+        saveData('hj_users', users);
+    }
+    // 기존 문서 데이터 마이그레이션
+    if (docs.length === 0) {
+        docs = [{ id: 1, docNo: '2024070301', title: '제9회차 전환사채 조기상환청구 안내', draftDate: '2024-07-03', approveDate: '2024-07-03', status: '결재완료', content: '조기상환 청구 본문...', tag: '디딤이앤에프', isOffline: false, drafterId: 'master', approvalLine: [{userId:'master', name:'김진홍', jobTitle:'대표이사', approved: true}], circularUsers: [] }];
+        saveData('hj_docs', docs);
+    }
+}
+
+// ================================================================
+// 로그 기록
+// ================================================================
+function recordLog(action, detail='') {
+    if (!currentUser) return;
+    activityLogs.push({ userId: currentUser.id, action, detail, ts: new Date().toISOString() });
+    saveData('hj_logs', activityLogs);
+}
+
+// ================================================================
+// 로그인/로그아웃
+// ================================================================
+function showLoginView(view) {
+    ['login-view','find-pw-view','request-id-view','reset-pw-view'].forEach(v => document.getElementById(v).classList.add('hidden'));
+    document.getElementById(view+'-view').classList.remove('hidden');
+}
+
+async function doLogin() {
+    const username = document.getElementById('login-id').value.trim();
+    const pw = document.getElementById('login-pw').value;
+    const errEl = document.getElementById('login-error');
+    
+    if (!username || !pw) { errEl.textContent = '아이디와 비밀번호를 입력하세요.'; errEl.classList.remove('hidden'); return; }
+    
+    const hash = await hashPw(pw);
+    const user = users.find(u => u.username === username && u.passwordHash === hash);
+    
+    if (!user) { errEl.textContent = '아이디 또는 비밀번호가 올바르지 않습니다.'; errEl.classList.remove('hidden'); return; }
+    
+    errEl.classList.add('hidden');
+    currentUser = user;
+    sessionStorage.setItem('hj_session', JSON.stringify({id: user.id, username: user.username}));
+    
+    if (user.mustResetPw) {
+        showLoginView('reset-pw');
+        return;
+    }
+    
+    enterApp();
+}
+
+async function doFindPw() {
+    const username = document.getElementById('fp-id').value.trim();
+    const email = document.getElementById('fp-email').value.trim();
+    const msgEl = document.getElementById('fp-msg');
+    
+    const user = users.find(u => u.username === username && u.email === email);
+    if (!user) { msgEl.textContent = '일치하는 계정을 찾을 수 없습니다.'; msgEl.style.color = '#f87171'; msgEl.classList.remove('hidden'); return; }
+    
+    // 임시 비밀번호 생성
+    const tempPw = 'Temp' + Math.random().toString(36).slice(2,8);
+    user.passwordHash = await hashPw(tempPw);
+    user.mustResetPw = true;
+    saveData('hj_users', users);
+    
+    // 실제 이메일 발송은 서버 필요. 여기서는 alert로 시뮬레이션.
+    alert(`임시 비밀번호: ${tempPw}\n(실제 서비스에서는 ${email}로 발송됩니다)`);
+    msgEl.textContent = '임시 비밀번호가 발급되었습니다. 로그인 후 반드시 변경해주세요.';
+    msgEl.style.color = '#4ade80';
+    msgEl.classList.remove('hidden');
+}
+
+async function doRequestId() {
+    const name = document.getElementById('req-name').value.trim();
+    const username = document.getElementById('req-id').value.trim();
+    const pw = document.getElementById('req-pw').value;
+    const phone = document.getElementById('req-phone').value.trim();
+    const email = document.getElementById('req-email').value.trim();
+    const jobTitle = document.getElementById('req-title').value.trim();
+    const msgEl = document.getElementById('req-msg');
+    
+    if (!name || !username || !pw) { msgEl.textContent = '필수 항목을 입력하세요.'; msgEl.style.color = '#f87171'; msgEl.classList.remove('hidden'); return; }
+    if (users.find(u => u.username === username) || pendingRequests.find(r => r.username === username)) { msgEl.textContent = '이미 사용 중인 아이디입니다.'; msgEl.style.color = '#f87171'; msgEl.classList.remove('hidden'); return; }
+    
+    const hash = await hashPw(pw);
+    pendingRequests.push({ id: 'req_'+Date.now(), username, passwordHash: hash, name, jobTitle, phone, email, requestedAt: new Date().toISOString() });
+    saveData('hj_pending', pendingRequests);
+    
+    msgEl.textContent = '신청이 완료되었습니다. 관리자 승인 후 로그인이 가능합니다.';
+    msgEl.style.color = '#4ade80';
+    msgEl.classList.remove('hidden');
+}
+
+async function doResetPw() {
+    const pw1 = document.getElementById('new-pw1').value;
+    const pw2 = document.getElementById('new-pw2').value;
+    const msgEl = document.getElementById('reset-msg');
+    
+    if (pw1 !== pw2) { msgEl.textContent = '비밀번호가 일치하지 않습니다.'; msgEl.classList.remove('hidden'); return; }
+    if (pw1.length < 6) { msgEl.textContent = '6자 이상 입력하세요.'; msgEl.classList.remove('hidden'); return; }
+    
+    const user = users.find(u => u.id === currentUser.id);
+    user.passwordHash = await hashPw(pw1);
+    user.mustResetPw = false;
+    saveData('hj_users', users);
+    currentUser = user;
+    
+    enterApp();
+}
+
+function doLogout() {
+    recordLog('로그아웃', '');
+    sessionStorage.removeItem('hj_session');
+    currentUser = null;
+    location.reload();
+}
+
+function enterApp() {
+    document.getElementById('login-screen').classList.add('hidden');
+    
+    // 사이드바 아바타/이름
+    const initials = currentUser.name.slice(-2);
+    document.getElementById('sidebar-avatar').textContent = initials;
+    document.getElementById('header-avatar').textContent = initials;
+    document.getElementById('sidebar-name').textContent = currentUser.name;
+    document.getElementById('sidebar-role').textContent = currentUser.jobTitle || (currentUser.isMaster ? '마스터' : '사용자');
+    
+    // 마스터 전용 메뉴 표시
+    if (currentUser.isMaster) {
+        document.getElementById('pc-users').classList.remove('hidden');
+        document.getElementById('pc-users').classList.add('flex');
+        document.getElementById('mob-users').classList.remove('hidden');
+        document.getElementById('mob-users').classList.add('flex');
+    }
+    
+    updatePendingBadge();
+    renderDocs();
+    renderTax();
+    renderMyInfo();
+    renderApprovalLineList();
+    lucide.createIcons();
+    recordLog('로그인', '');
+}
+
+// ================================================================
+// 문서 렌더링 (열람 권한 필터)
+// ================================================================
+function getAccessibleDocs() {
+    return docs.filter(d => {
+        if (!currentUser) return false;
+        if (currentUser.isMaster) return true;
+        // 결재라인에 포함 여부
+        const inLine = d.approvalLine && d.approvalLine.some(a => a.userId === currentUser.id);
+        // 공람 여부
+        const inCircular = d.circularUsers && d.circularUsers.includes(currentUser.id);
+        // 기안자 여부
+        const isDrafter = d.drafterId === currentUser.id;
+        return inLine || inCircular || isDrafter;
+    });
+}
+
+function renderDocs() {
+    const query = (document.getElementById('doc-search')?.value || '').toLowerCase();
+    const accessible = getAccessibleDocs();
+    const filtered = accessible.filter(d => d.title.toLowerCase().includes(query) || (d.tag && d.tag.toLowerCase().includes(query)));
+    
+    document.getElementById('approval-list').innerHTML = filtered.map(d => {
+        const drafter = users.find(u => u.id === d.drafterId);
+        const drafterName = drafter ? drafter.name : '-';
+        const hasCircular = d.circularUsers && d.circularUsers.length > 0;
+        return `
+        <tr class="hover:bg-slate-500/5 cursor-pointer transition" onclick="if(event.target.type !== 'checkbox') openDocViewer(${d.id})">
+            <td class="p-4 text-center"><input type="checkbox" class="doc-check" value="${d.id}"></td>
+            <td class="p-4 text-center"><span class="px-2 py-1 rounded text-[10px] font-black ${d.status==='결재완료'?'bg-slate-500/10 text-slate-500 dark:bg-slate-800':'bg-orange-500/20 text-orange-500'}">${d.status}</span></td>
+            <td class="p-4"><div class="font-bold text-[var(--text-main)]">${d.title}${hasCircular ? ' <span class="circular-badge">공람</span>' : ''}</div><div class="text-xs opacity-40 font-bold num-font mt-0.5">${d.docNo}</div>${d.tag ? `<span class="inline-block mt-1 text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded">#${d.tag}</span>` : ''}</td>
+            <td class="p-4 text-center text-xs opacity-50 num-font">${d.draftDate}</td>
+            <td class="p-4 text-center text-xs text-blue-500 font-bold num-font">${d.approveDate}</td>
+            <td class="p-4 text-center text-xs opacity-70 font-bold">${drafterName}</td>
+        </tr>`;
+    }).join('');
+    
+    document.getElementById('dash-docs').innerHTML = accessible.filter(d=>d.status==='결재대기').slice(0,3).map(d => `<div class="p-4 bg-slate-500/5 rounded-2xl flex justify-between items-center"><span class="text-sm font-bold opacity-80 truncate">${d.title}</span><span class="text-[10px] opacity-40 font-black">${d.draftDate}</span></div>`).join('') || '<p class="text-sm opacity-40 font-bold">결재 대기 문서 없음</p>';
+    
+    lucide.createIcons();
+}
+
+// ================================================================
+// 문서 열람
+// ================================================================
+function openDocViewer(id) {
+    const d = docs.find(x => x.id === id); currentDocId = id;
+    setZoom(1.0);
+    const isDone = d.status === '결재완료';
+    const isMaster = currentUser?.isMaster;
+    const isDrafter = d.drafterId === currentUser?.id;
+    const inApprovalLine = d.approvalLine?.some(a => a.userId === currentUser?.id);
+    
+    document.getElementById('v-mode-title').innerText = "VIEWER (" + d.status + ")";
+    document.getElementById('w-title').innerText = d.title;
+    document.getElementById('w-content').innerText = d.content;
+    document.getElementById('w-meta-no').innerText = d.docNo;
+    document.getElementById('w-meta-date').innerText = d.draftDate;
+    document.getElementById('v-tag-content').innerText = d.tag ? `#${d.tag}` : '#미지정';
+
+    if(d.isOffline) {
+        document.getElementById('doc-online-area').classList.add('hidden');
+        document.getElementById('doc-offline-area').classList.remove('hidden');
+        document.getElementById('v-offline-img').src = d.content;
+    } else {
+        document.getElementById('doc-online-area').classList.remove('hidden');
+        document.getElementById('doc-offline-area').classList.add('hidden');
+    }
+
+    document.getElementById('w-seal-area').classList.toggle('hidden', !isDone);
+    if(isDone && registeredSeal) { document.getElementById('w-seal-img').src = registeredSeal; document.getElementById('w-seal-img').classList.remove('hidden'); document.getElementById('w-seal-text').classList.add('hidden'); }
+    
+    // 승인 버튼: 결재라인에 있고 미완료 시
+    document.getElementById('btn-approve').classList.toggle('hidden', isDone || !inApprovalLine);
+    document.getElementById('btn-save').classList.add('hidden');
+    
+    // 공람 버튼: 기안자 또는 마스터만
+    const canCircular = isDrafter || isMaster || inApprovalLine;
+    document.getElementById('btn-circular').classList.toggle('hidden', !canCircular || d.isOffline);
+    
+    document.getElementById('w-paper').querySelectorAll('[contenteditable]').forEach(el => el.contentEditable = false);
+    
+    // 결재라인 렌더
+    renderApprovalLineOnDoc(d.approvalLine || []);
+    
+    // 공람자 표시
+    renderCircularOnDoc(d.circularUsers || []);
+    
+    recordLog('문서 열람', d.title);
+    openModal('wysiwyg-modal');
+    lucide.createIcons();
+}
+
+function renderApprovalLineOnDoc(line) {
+    const el = document.getElementById('w-approval-line');
+    if (!line || line.length === 0) { el.innerHTML = ''; return; }
+    
+    const cols = line.map(a => `
+        <td style="border:1px solid #999; padding:4px 8px; text-align:center; min-width:90px;">
+            <div style="font-size:10px; color:#666; font-weight:bold; background:#f5f5f5; padding:2px 4px; margin-bottom:4px;">${a.jobTitle || ''}</div>
+            <div style="font-size:13px; ${a.approved ? 'font-weight:bold;' : ''} min-height:28px; padding:4px 0;">${a.name}</div>
+        </td>`).join('');
+    
+    el.innerHTML = `<table style="border-collapse:collapse; margin:0 auto;"><tr>${cols}</tr></table>`;
+}
+
+function renderCircularOnDoc(circularUserIds) {
+    const area = document.getElementById('w-circular-area');
+    const namesEl = document.getElementById('w-circular-names');
+    if (!circularUserIds || circularUserIds.length === 0) { area.classList.add('hidden'); return; }
+    area.classList.remove('hidden');
+    namesEl.innerHTML = circularUserIds.map(uid => {
+        const u = users.find(x => x.id === uid);
+        return u ? `<span class="circular-badge">${u.name}</span>` : '';
+    }).join('');
+}
+
+// ================================================================
+// 기안 (온라인)
+// ================================================================
+function openWysiwygDraft() {
+    currentDocId = null; setZoom(1.0);
+    document.getElementById('v-mode-title').innerText = "ONLINE DRAFT";
+    document.getElementById('w-title').innerText = "여기에 제목을 입력하세요";
+    document.getElementById('w-content').innerText = "1. 귀사의 무궁한 발전을 기원합니다.\n\n2. \n\n끝.";
+    document.getElementById('doc-online-area').classList.remove('hidden');
+    document.getElementById('doc-offline-area').classList.add('hidden');
+    document.getElementById('w-seal-area').classList.add('hidden');
+    document.getElementById('btn-approve').classList.add('hidden');
+    document.getElementById('btn-circular').classList.add('hidden');
+    document.getElementById('btn-save').classList.remove('hidden');
+    document.getElementById('w-paper').querySelectorAll('[contenteditable]').forEach(el => el.contentEditable = "true");
+    document.getElementById('w-approval-line').innerHTML = '';
+    document.getElementById('w-circular-area').classList.add('hidden');
+    
+    // 결재라인 템플릿이 있으면 선택 모달 표시
+    if (approvalLineTemplates.length > 0) {
+        renderSelectApprovalLine();
+        openModal('select-approval-line-modal');
+    } else {
+        // 기본 결재라인 자동 생성
+        applyDefaultApprovalLine();
+    }
+    
+    openModal('wysiwyg-modal');
+    lucide.createIcons();
+}
+
+function applyDefaultApprovalLine() {
+    // 기안자 본인 + 대표이사
+    const master = users.find(u => u.isMaster);
+    const line = [];
+    if (currentUser && !currentUser.isMaster) {
+        line.push({ userId: currentUser.id, name: currentUser.name, jobTitle: currentUser.jobTitle || '', approved: false });
+    }
+    if (master) {
+        line.push({ userId: master.id, name: master.name, jobTitle: master.jobTitle || '대표이사', approved: false });
+    }
+    renderApprovalLineOnDoc(line);
+    // draft에 임시 저장
+    window._draftApprovalLine = line;
+}
+
+function renderSelectApprovalLine() {
+    const el = document.getElementById('select-al-list');
+    el.innerHTML = [
+        `<button onclick="applyDefaultApprovalLine();closeModal('select-approval-line-modal')" class="w-full text-left p-4 bg-slate-500/5 border border-[var(--border)] rounded-xl font-bold hover:bg-blue-500/5 hover:border-blue-500/30 transition text-[var(--text-main)]">
+            <p class="text-sm font-black">기본 결재라인</p>
+            <p class="text-xs opacity-50 mt-1">기안자 → 대표이사</p>
+        </button>`,
+        ...approvalLineTemplates.map(t => {
+            const approverNames = t.approvers.map(uid => users.find(u => u.id === uid)?.name || uid).join(' → ');
+            return `<button onclick="applyTemplate('${t.id}');closeModal('select-approval-line-modal')" class="w-full text-left p-4 bg-slate-500/5 border border-[var(--border)] rounded-xl font-bold hover:bg-blue-500/5 hover:border-blue-500/30 transition text-[var(--text-main)]">
+                <p class="text-sm font-black">${t.name}</p>
+                <p class="text-xs opacity-50 mt-1">${approverNames}</p>
+            </button>`;
+        })
+    ].join('');
+}
+
+function applyTemplate(templateId) {
+    const t = approvalLineTemplates.find(x => x.id === templateId);
+    if (!t) return;
+    const line = [];
+    if (currentUser && !currentUser.isMaster && !t.approvers.includes(currentUser.id)) {
+        line.push({ userId: currentUser.id, name: currentUser.name, jobTitle: currentUser.jobTitle || '', approved: false });
+    }
+    t.approvers.forEach(uid => {
+        const u = users.find(x => x.id === uid);
+        if (u) line.push({ userId: u.id, name: u.name, jobTitle: u.jobTitle || '', approved: false });
+    });
+    window._draftApprovalLine = line;
+    renderApprovalLineOnDoc(line);
+}
+
+function submitWysiwyg() {
+    const date = TODAY.toISOString().split('T')[0];
+    const count = docs.filter(d => d.draftDate === date).length + 1;
+    const docNo = date.replace(/-/g,'') + String(count).padStart(2, '0');
+    const approvalLine = window._draftApprovalLine || [];
+    
+    // 대표이사가 직접 기안 시 바로 결재완료
+    const status = currentUser?.isMaster ? '결재완료' : '결재대기';
+    const approveDate = currentUser?.isMaster ? date : '-';
+    const finalLine = approvalLine.map(a => ({...a, approved: currentUser?.isMaster ? true : a.approved}));
+    
+    const newDoc = {
+        id: Date.now(), docNo, status,
+        draftDate: date, approveDate,
+        title: document.getElementById('w-title').innerText,
+        content: document.getElementById('w-content').innerText,
+        tag: "", isOffline: false,
+        drafterId: currentUser?.id,
+        approvalLine: finalLine,
+        circularUsers: []
+    };
+    docs.unshift(newDoc);
+    saveData('hj_docs', docs);
+    window._draftApprovalLine = null;
+    recordLog('문서 기안', newDoc.title);
+    closeModal('wysiwyg-modal'); renderDocs();
+}
+
+// ================================================================
+// 승인
+// ================================================================
+function openPasswordModal() { openModal('password-modal'); }
+
+async function verifyAndApprove() { 
+    const inputPw = document.getElementById('approve-pw').value;
+    const hash = await hashPw(inputPw);
+    // approvalPassword도 해시로 비교 (신규 저장 시 해시, 기존 평문 호환)
+    const isMatch = inputPw === approvalPassword || hash === approvalPassword;
+    if(isMatch) {
+        const d = docs.find(x => x.id === currentDocId);
+        d.status = '결재완료';
+        d.approveDate = TODAY.toISOString().split('T')[0];
+        // 결재라인에서 현재 사용자 approved 처리
+        if (d.approvalLine) {
+            const myEntry = d.approvalLine.find(a => a.userId === currentUser?.id);
+            if (myEntry) myEntry.approved = true;
+        }
+        saveData('hj_docs', docs);
+        recordLog('문서 결재 승인', d.title);
+        closeModal('password-modal');
+        document.getElementById('approve-pw').value = '';
+        renderDocs(); openDocViewer(d.id);
+    } else { alert('비밀번호 오류'); }
+}
+
+// ================================================================
+// 공람
+// ================================================================
+function openCircularModal() {
+    const d = docs.find(x => x.id === currentDocId);
+    if (!d) return;
+    const el = document.getElementById('circular-user-list');
+    const otherUsers = users.filter(u => u.id !== currentUser?.id);
+    el.innerHTML = otherUsers.map(u => `
+        <label class="flex items-center space-x-3 p-3 bg-slate-500/5 rounded-xl cursor-pointer hover:bg-blue-500/5 transition">
+            <input type="checkbox" class="circular-check" value="${u.id}" ${d.circularUsers?.includes(u.id) ? 'checked' : ''}>
+            <div>
+                <p class="font-bold text-sm text-[var(--text-main)]">${u.name}</p>
+                <p class="text-xs opacity-50">${u.jobTitle || ''} · ${u.username}</p>
+            </div>
+        </label>`).join('');
+    openModal('circular-modal');
+}
+
+// btn-circular 클릭 시
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btn-circular').addEventListener('click', openCircularModal);
+});
+
+function saveCircular() {
+    const d = docs.find(x => x.id === currentDocId);
+    if (!d) return;
+    const checked = [...document.querySelectorAll('.circular-check:checked')].map(c => c.value);
+    d.circularUsers = checked;
+    saveData('hj_docs', docs);
+    recordLog('공람 설정', d.title + ' → ' + checked.join(', '));
+    closeModal('circular-modal');
+    renderCircularOnDoc(d.circularUsers);
+    renderDocs();
+}
+
+// ================================================================
+// PDF
+// ================================================================
+async function saveCurrentToPDF() {
+    const { jsPDF } = window.jspdf;
+    const element = document.getElementById('w-paper');
+    const canvas = await html2canvas(element, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+    pdf.save(`흥진_문서_${currentDocId}.pdf`);
+    recordLog('PDF 다운로드', `문서ID: ${currentDocId}`);
+}
+
+async function downloadSelected() {
+    const checks = document.querySelectorAll('.doc-check:checked');
+    if(checks.length === 0) return alert('다운로드할 문서를 선택하세요.');
+    alert(checks.length + '개의 문서를 순차적으로 생성합니다. 팝업 차단을 해제해 주세요.');
+    for(let check of checks) {
+        openDocViewer(parseInt(check.value));
+        await new Promise(r => setTimeout(r, 500));
+        await saveCurrentToPDF();
+    }
+}
+
+// ================================================================
+// 기타 문서 유틸
+// ================================================================
+function toggleTagEdit() {
+    const d = docs.find(x => x.id === currentDocId);
+    const isEdit = document.getElementById('w-tag-input').classList.toggle('hidden');
+    if(isEdit) {
+        d.tag = document.getElementById('w-tag-input').value;
+        document.getElementById('v-tag-content').innerText = d.tag ? `#${d.tag}` : '#미지정';
+        document.getElementById('v-tag-content').classList.remove('hidden');
+        saveData('hj_docs', docs);
+        renderDocs();
+    } else {
+        document.getElementById('w-tag-input').value = d?.tag || "";
+        document.getElementById('v-tag-content').classList.add('hidden');
+    }
+}
+
+function handleOfflineFile(input) { if(input.files[0]) { tempOfflineUrl = URL.createObjectURL(input.files[0]); document.getElementById('off-file-name').innerText = input.files[0].name; } }
+function submitOffline() {
+    const date = document.getElementById('off-date').value;
+    const master = users.find(u => u.isMaster);
+    const newDoc = {
+        id: Date.now(), docNo: date.replace(/-/g,'')+'00', status: '결재완료',
+        draftDate: date, approveDate: TODAY.toISOString().split('T')[0],
+        title: '[오프라인] '+document.getElementById('off-title').value,
+        content: tempOfflineUrl, tag: document.getElementById('off-tag').value,
+        isOffline: true, drafterId: currentUser?.id,
+        approvalLine: master ? [{userId: master.id, name: master.name, jobTitle: master.jobTitle, approved: true}] : [],
+        circularUsers: []
+    };
+    docs.unshift(newDoc);
+    saveData('hj_docs', docs);
+    recordLog('오프라인 문서 등재', newDoc.title);
+    renderDocs(); closeModal('offline-modal');
+}
+
+// ================================================================
+// 사용자 관리
+// ================================================================
+function updatePendingBadge() {
+    const cnt = pendingRequests.length;
+    const badge = document.getElementById('pending-badge');
+    if (cnt > 0 && currentUser?.isMaster) {
+        badge.textContent = cnt; badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function renderUsers() {
+    if (!currentUser?.isMaster) return;
+    
+    // 대기 신청
+    const pendingSection = document.getElementById('pending-requests-section');
+    const pendingList = document.getElementById('pending-list');
+    if (pendingRequests.length > 0) {
+        pendingSection.classList.remove('hidden');
+        pendingList.innerHTML = pendingRequests.map(r => `
+            <div class="bg-[var(--card-bg)] border border-orange-300/50 p-4 rounded-2xl flex items-center justify-between">
+                <div>
+                    <p class="font-black text-sm text-[var(--text-main)]">${r.name} <span class="text-xs font-bold opacity-50">@${r.username}</span></p>
+                    <p class="text-xs opacity-50">${r.jobTitle || '직함 미지정'} · ${r.phone || '-'} · ${r.email || '-'}</p>
+                    <p class="text-[10px] opacity-30 mt-1">${new Date(r.requestedAt).toLocaleString('ko-KR')}</p>
+                </div>
+                <div class="flex space-x-2 shrink-0 ml-3">
+                    <button onclick="approveRequest('${r.id}')" class="bg-emerald-500 text-white px-3 py-2 rounded-xl text-xs font-black">승인</button>
+                    <button onclick="rejectRequest('${r.id}')" class="bg-red-500/20 text-red-500 px-3 py-2 rounded-xl text-xs font-black">거절</button>
+                </div>
+            </div>`).join('');
+    } else {
+        pendingSection.classList.add('hidden');
+    }
+    
+    // 사용자 카드
+    const colors = ['#007AFF','#34C759','#FF9500','#FF3B30','#5856D6','#FF2D55','#AC8E68'];
+    document.getElementById('user-cards').innerHTML = users.map((u, i) => `
+        <div class="bg-[var(--card-bg)] border border-[var(--border)] rounded-3xl p-5 cursor-pointer hover:shadow-md transition" onclick="showUserDetail('${u.id}')">
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="user-avatar" style="background:${colors[i%colors.length]}">${u.name.slice(-2)}</div>
+                <div>
+                    <p class="font-black text-[var(--text-main)]">${u.name} ${u.isMaster ? '<span class="text-[10px] bg-blue-500/20 text-blue-500 px-2 py-0.5 rounded font-black">MASTER</span>' : ''}</p>
+                    <p class="text-xs opacity-50">@${u.username}</p>
+                </div>
+            </div>
+            <div class="space-y-1 text-xs opacity-60">
+                <p><span class="font-bold opacity-70">사번</span> ${u.empNo || '-'}</p>
+                <p><span class="font-bold opacity-70">직함</span> ${u.jobTitle || '-'}</p>
+                <p><span class="font-bold opacity-70">전화</span> ${u.phone || '-'}</p>
+            </div>
+        </div>`).join('');
+    
+    updatePendingBadge();
+    lucide.createIcons();
+}
+
+function showUserDetail(userId) {
+    const u = users.find(x => x.id === userId);
+    if (!u) return;
+    const logCount = activityLogs.filter(l => l.userId === userId).length;
+    
+    document.getElementById('user-detail-content').innerHTML = `
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex items-center space-x-4">
+                <div class="user-avatar w-16 h-16 text-xl" style="background:#007AFF">${u.name.slice(-2)}</div>
+                <div>
+                    <h4 class="text-xl font-black text-[var(--text-main)]">${u.name}</h4>
+                    <p class="text-sm opacity-50">@${u.username} · ${u.jobTitle || '직함 없음'}</p>
+                </div>
+            </div>
+            <button onclick="closeModal('user-detail-modal')" class="text-xs opacity-50">닫기</button>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="bg-slate-500/5 p-3 rounded-xl"><p class="text-[10px] opacity-40 font-bold uppercase mb-1">사번</p><p class="font-bold text-sm text-[var(--text-main)]">${u.empNo || '-'}</p></div>
+            <div class="bg-slate-500/5 p-3 rounded-xl"><p class="text-[10px] opacity-40 font-bold uppercase mb-1">전화번호</p><p class="font-bold text-sm text-[var(--text-main)]">${u.phone || '-'}</p></div>
+            <div class="bg-slate-500/5 p-3 rounded-xl col-span-2"><p class="text-[10px] opacity-40 font-bold uppercase mb-1">이메일</p><p class="font-bold text-sm text-[var(--text-main)]">${u.email || '-'}</p></div>
+            <div class="bg-slate-500/5 p-3 rounded-xl"><p class="text-[10px] opacity-40 font-bold uppercase mb-1">가입일</p><p class="font-bold text-sm text-[var(--text-main)]">${u.createdAt}</p></div>
+            <div class="bg-slate-500/5 p-3 rounded-xl"><p class="text-[10px] opacity-40 font-bold uppercase mb-1">활동 기록</p><p class="font-bold text-sm text-[var(--text-main)]">${logCount}건</p></div>
+        </div>
+        <div class="flex space-x-2">
+            <button onclick="viewUserLog('${u.id}','${u.name}')" class="flex-1 py-3 bg-slate-800 text-white rounded-xl font-bold text-sm flex items-center justify-center">
+                <i data-lucide="activity" class="w-4 h-4 mr-2"></i>활동 로그 보기
+            </button>
+            ${!u.isMaster ? `<button onclick="if(confirm('${u.name} 계정을 삭제하시겠습니까?'))deleteUser('${u.id}')" class="py-3 px-4 bg-red-500/20 text-red-500 rounded-xl font-bold text-sm">삭제</button>` : ''}
+        </div>`;
+    lucide.createIcons();
+    openModal('user-detail-modal');
+}
+
+function viewUserLog(userId, name) {
+    document.getElementById('log-modal-title').textContent = name + ' 활동 로그';
+    const logs = activityLogs.filter(l => l.userId === userId).reverse();
+    document.getElementById('user-log-list').innerHTML = logs.length === 0 
+        ? '<p class="text-sm opacity-40 font-bold text-center py-8">기록 없음</p>'
+        : logs.map(l => `
+            <div class="flex items-start space-x-3 p-3 bg-slate-500/5 rounded-xl">
+                <div class="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-[var(--text-main)]">${l.action}</p>
+                    ${l.detail ? `<p class="text-xs opacity-50">${l.detail}</p>` : ''}
+                    <p class="text-[10px] opacity-30 mt-1">${new Date(l.ts).toLocaleString('ko-KR')}</p>
+                </div>
+            </div>`).join('');
+    closeModal('user-detail-modal');
+    openModal('user-log-modal');
+}
+
+function deleteUser(userId) {
+    users = users.filter(u => u.id !== userId);
+    saveData('hj_users', users);
+    recordLog('사용자 삭제', `userId: ${userId}`);
+    closeModal('user-detail-modal');
+    renderUsers();
+}
+
+async function approveRequest(reqId) {
+    const req = pendingRequests.find(r => r.id === reqId);
+    if (!req) return;
+    
+    const empNo = 'EMP-' + String(users.length + 1).padStart(3, '0');
+    users.push({
+        id: req.id,
+        username: req.username,
+        passwordHash: req.passwordHash,
+        name: req.name,
+        jobTitle: req.jobTitle || '',
+        empNo,
+        phone: req.phone || '',
+        email: req.email || '',
+        isMaster: false,
+        mustResetPw: false,
+        createdAt: new Date().toISOString().split('T')[0]
+    });
+    pendingRequests = pendingRequests.filter(r => r.id !== reqId);
+    saveData('hj_users', users);
+    saveData('hj_pending', pendingRequests);
+    recordLog('계정 신청 승인', req.name + ' (@' + req.username + ')');
+    renderUsers();
+}
+
+function rejectRequest(reqId) {
+    const req = pendingRequests.find(r => r.id === reqId);
+    pendingRequests = pendingRequests.filter(r => r.id !== reqId);
+    saveData('hj_pending', pendingRequests);
+    recordLog('계정 신청 거절', req?.name);
+    renderUsers();
+}
+
+async function createUser() {
+    const name = document.getElementById('cu-name').value.trim();
+    const username = document.getElementById('cu-id').value.trim();
+    const pw = document.getElementById('cu-pw').value;
+    const jobTitle = document.getElementById('cu-title').value.trim();
+    const phone = document.getElementById('cu-phone').value.trim();
+    const email = document.getElementById('cu-email').value.trim();
+    const errEl = document.getElementById('cu-err');
+    
+    if (!name || !username || !pw) { errEl.textContent = '필수 항목을 입력하세요 (*).'; errEl.classList.remove('hidden'); return; }
+    if (users.find(u => u.username === username)) { errEl.textContent = '이미 사용 중인 아이디입니다.'; errEl.classList.remove('hidden'); return; }
+    
+    const hash = await hashPw(pw);
+    const empNo = 'EMP-' + String(users.length + 1).padStart(3, '0');
+    users.push({ id: 'u_'+Date.now(), username, passwordHash: hash, name, jobTitle, empNo, phone, email, isMaster: false, mustResetPw: false, createdAt: new Date().toISOString().split('T')[0] });
+    saveData('hj_users', users);
+    recordLog('사용자 직접 생성', name + ' (@' + username + ')');
+    errEl.classList.add('hidden');
+    closeModal('create-user-modal');
+    ['cu-name','cu-id','cu-pw','cu-title','cu-phone','cu-email'].forEach(id => document.getElementById(id).value = '');
+    renderUsers();
+}
+
+// ================================================================
+// 내 정보
+// ================================================================
+function renderMyInfo() {
+    if (!currentUser) return;
+    document.getElementById('my-name-display').textContent = currentUser.name || '-';
+    document.getElementById('my-title-display').textContent = currentUser.jobTitle || '-';
+    document.getElementById('my-empno-display').textContent = currentUser.empNo || '-';
+    document.getElementById('my-email-display').textContent = currentUser.email || '-';
+}
+
+async function updateMyPassword() {
+    const oldPw = document.getElementById('set-old-pw').value;
+    const newPw1 = document.getElementById('set-new-pw1').value;
+    const newPw2 = document.getElementById('set-new-pw2').value;
+    
+    if (newPw1 !== newPw2) { alert('새 비밀번호가 일치하지 않습니다.'); return; }
+    if (newPw1.length < 6) { alert('6자 이상 입력하세요.'); return; }
+    
+    const oldHash = await hashPw(oldPw);
+    const user = users.find(u => u.id === currentUser.id);
+    if (user.passwordHash !== oldHash) { alert('현재 비밀번호가 올바르지 않습니다.'); return; }
+    
+    user.passwordHash = await hashPw(newPw1);
+    saveData('hj_users', users);
+    currentUser = user;
+    alert('비밀번호가 변경되었습니다.');
+    ['set-old-pw','set-new-pw1','set-new-pw2'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ================================================================
+// 결재라인 템플릿
+// ================================================================
+function renderApprovalLineList() {
+    const el = document.getElementById('approval-line-list');
+    if (approvalLineTemplates.length === 0) { el.innerHTML = '<p class="text-xs opacity-40 font-bold">저장된 템플릿이 없습니다.</p>'; return; }
+    el.innerHTML = approvalLineTemplates.map(t => {
+        const names = t.approvers.map(uid => users.find(u => u.id === uid)?.name || uid).join(' → ');
+        return `<div class="flex items-center justify-between p-3 bg-slate-500/5 rounded-xl">
+            <div><p class="font-bold text-sm text-[var(--text-main)]">${t.name}</p><p class="text-xs opacity-50 mt-0.5">${names}</p></div>
+            <button onclick="deleteApprovalLineTemplate('${t.id}')" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        </div>`;
+    }).join('');
+    lucide.createIcons();
+}
+
+function addApproverInput() {
+    const cont = document.getElementById('al-approvers');
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.placeholder = `결재자 아이디 ${cont.children.length + 1}`;
+    inp.className = 'al-approver-input w-full p-3 bg-slate-500/5 border border-[var(--border)] rounded-xl text-[var(--text-main)] text-sm';
+    cont.appendChild(inp);
+}
+
+function saveApprovalLineTemplate() {
+    const name = document.getElementById('al-name').value.trim();
+    if (!name) { alert('템플릿 이름을 입력하세요.'); return; }
+    const approverIds = [...document.querySelectorAll('.al-approver-input')]
+        .map(i => i.value.trim())
+        .filter(Boolean)
+        .map(username => users.find(u => u.username === username)?.id)
+        .filter(Boolean);
+    
+    if (approverIds.length === 0) { alert('유효한 결재자를 입력하세요.'); return; }
+    
+    approvalLineTemplates.push({ id: 'alt_'+Date.now(), name, approvers: approverIds });
+    saveData('hj_al_templates', approvalLineTemplates);
+    closeModal('approval-line-modal');
+    renderApprovalLineList();
+}
+
+function deleteApprovalLineTemplate(id) {
+    approvalLineTemplates = approvalLineTemplates.filter(t => t.id !== id);
+    saveData('hj_al_templates', approvalLineTemplates);
+    renderApprovalLineList();
+}
+
+// ================================================================
+// 기타 유틸
+// ================================================================
+function toggleTheme() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    document.getElementById('theme-label').innerText = isDark ? 'Dark Mode' : 'Light Mode';
+    document.querySelectorAll('#theme-icon').forEach(el => el.setAttribute('data-lucide', isDark ? 'moon' : 'sun'));
+    lucide.createIcons();
+}
+
+function changeTab(tab) {
+    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pc-' + tab)?.classList.add('active');
+    document.querySelectorAll('.mobile-nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('mob-' + tab)?.classList.add('active');
+    
+    if (tab === 'users') renderUsers();
+    recordLog('메뉴 접속', tab);
+    lucide.createIcons();
+}
+
+function setZoom(val) {
+    currentZoom = parseFloat(val);
+    document.getElementById('zoom-wrapper').style.transform = `scale(${currentZoom})`;
+    document.getElementById('zoom-val').innerText = Math.round(currentZoom * 100);
+}
+function adjustZoom(delta) { setZoom(currentZoom + delta); }
+
+function handleSealRegister(input) { const reader = new FileReader(); reader.onload = e => { registeredSeal = e.target.result; saveData('hj_seal', registeredSeal); alert('직인 등록 완료'); }; reader.readAsDataURL(input.files[0]); }
+function updatePassword() { approvalPassword = document.getElementById('set-approve-pw').value; saveData('hj_approve_pw', approvalPassword); alert('변경 완료'); }
+function toggleAll(src) { document.querySelectorAll('.doc-check').forEach(c => c.checked = src.checked); }
+function openModal(id) { document.getElementById(id).classList.replace('hidden', 'flex'); }
+function closeModal(id) { document.getElementById(id).classList.replace('flex', 'hidden'); }
+
+function renderTax() {
+    const list = [{d:'2026-04-25',t:'부가세 신고'},{d:'2026-05-10',t:'원천세 신고'},{d:'2026-05-31',t:'종합소득세'}];
+    const el = document.getElementById('dash-tax-list');
+    if (!el) return;
+    el.innerHTML = list.map(s => `<div class="p-3 bg-slate-500/5 border border-[var(--border)] rounded-2xl flex justify-between items-center"><div><p class="text-[10px] opacity-40 font-bold uppercase">${s.d}</p><p class="text-sm font-bold">${s.t}</p></div><span class="text-xs font-black text-red-500">D-${Math.ceil((new Date(s.d)-TODAY)/86400000)}</span></div>`).join('');
+}
+
+// ================================================================
+// 초기화
+// ================================================================
+window.addEventListener('load', async () => {
+    await initMaster();
+    
+    // 세션 복원
+    const session = sessionStorage.getItem('hj_session');
+    if (session) {
+        const s = JSON.parse(session);
+        const user = users.find(u => u.id === s.id);
+        if (user) {
+            currentUser = user;
+            enterApp();
+            return;
+        }
+    }
+    
+    // 로그인 화면 표시
+    lucide.createIcons();
+});
+</script>
 </html>
