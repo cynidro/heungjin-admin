@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>흥진파트너스 관리시스템</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .apple-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-[#F2F2F7] text-black pb-24">
+
+    <header class="sticky top-0 z-50 bg-white/80 apple-blur border-b border-gray-200 px-5 py-4 flex justify-between items-center">
+        <h1 class="text-[17px] font-bold tracking-tight whitespace-nowrap">유한책임회사 흥진파트너스</h1>
+        <i data-lucide="search" class="w-5 h-5 text-blue-600"></i>
+    </header>
+
+    <main class="p-4 space-y-6 max-w-lg mx-auto">
+        
+        <section class="grid grid-cols-2 gap-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <p class="text-[11px] font-bold text-gray-400 uppercase">2026 거래건수</p>
+                <p class="text-xl font-black mt-1 text-blue-600">진행 중</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <p class="text-[11px] font-bold text-gray-400 uppercase">미결재 문서</p>
+                <p class="text-xl font-black mt-1 text-orange-500">2건</p>
+            </div>
+        </section>
+
+        <section class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+            <h3 class="text-sm font-bold mb-5 flex items-center">
+                <i data-lucide="plus-circle" class="w-4 h-4 mr-2 text-blue-600"></i> 새 거래 등록
+            </h3>
+            <div class="space-y-5">
+                <div>
+                    <input type="number" placeholder="₩ 0" class="w-full text-3xl font-bold p-0 border-none focus:ring-0 outline-none placeholder-gray-200">
+                </div>
+                
+                <div>
+                    <p class="text-[11px] font-bold text-blue-600 mb-2">태그 (계정과목)</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold border border-blue-100">#복리후생비</button>
+                        <button class="px-3 py-1.5 rounded-full bg-gray-50 text-gray-500 text-xs font-medium border border-gray-100">#지급임차료</button>
+                        <button class="px-3 py-1.5 rounded-full bg-gray-50 text-gray-500 text-xs font-medium border border-gray-100">#여비교통비</button>
+                        <button class="px-3 py-1.5 rounded-full bg-gray-50 text-gray-500 text-xs font-medium border border-gray-100">#매출</button>
+                        <button class="px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-bold w-7 h-7 flex items-center justify-center">+</button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <input type="text" placeholder="결제수단 (ex. 보통예금)" class="w-full p-3 bg-[#F2F2F7] rounded-xl text-sm outline-none border-none">
+                    <input type="text" placeholder="메모 (거래처 및 내역)" class="w-full p-3 bg-[#F2F2F7] rounded-xl text-sm outline-none border-none">
+                </div>
+
+                <button class="w-full py-4 bg-gray-100 text-gray-400 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-gray-200 active:bg-gray-200 transition-all">
+                    <i data-lucide="camera" class="w-6 h-6 mb-1"></i>
+                    <span class="text-[10px] font-bold">오프라인 영수증/문서 등재</span>
+                </button>
+
+                <button class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-blue-100 active:scale-[0.98] transition-all">
+                    장부 기록하기
+                </button>
+            </div>
+        </section>
+
+        <section class="space-y-3">
+            <h3 class="text-sm font-bold text-gray-500 ml-1">최근 전자결재</h3>
+            <div class="bg-white rounded-3xl overflow-hidden divide-y divide-gray-50">
+                <div class="p-4 flex justify-between items-center">
+                    <div>
+                        <p class="text-sm font-bold text-gray-800">제9회차 전환사채 조기상환</p>
+                        <p class="text-[10px] text-gray-400 mt-1">2026.04.09 · 결재완료</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="fixed bottom-0 w-full bg-white/90 apple-blur border-t border-gray-200 px-6 py-3 flex justify-between items-center pb-safe">
+        <div class="flex flex-col items-center text-blue-600">
+            <i data-lucide="file-text" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-1">결재</span>
+        </div>
+        <div class="flex flex-col items-center text-gray-400">
+            <i data-lucide="pie-chart" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-1">장부</span>
+        </div>
+        <div class="flex flex-col items-center text-gray-400">
+            <i data-lucide="settings" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-1">설정</span>
+        </div>
+    </nav>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
