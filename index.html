@@ -3,34 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>흥진파트너스 Enterprise ERP</title>
+    <title>흥진파트너스 Ultimate ERP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
         body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: #f8fafc; }
-        /* 회계용 고정폭 숫자 폰트 설정 */
         .num-font { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* 공문서 A4 스타일 규격 */
+        /* 공문서 (디딤이앤에프 등 공식 양식 반영) */
         .a4-paper {
-            width: 100%;
-            max-width: 794px;
-            aspect-ratio: 1 / 1.414;
-            background: white;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            margin: 0 auto;
-            padding: 40px;
-            color: black;
+            width: 100%; max-width: 794px; min-height: 1123px;
+            background: white; margin: 0 auto; padding: 60px 50px; color: black;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            display: flex; flex-col; justify-content: flex-start;
         }
-        .official-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .official-table th, .official-table td { border: 1px solid #1f2937; padding: 6px 10px; text-align: left; }
-        .official-table th { background-color: #f3f4f6; text-align: center; font-weight: 700; width: 120px; }
-        .sign-table { border-collapse: collapse; text-align: center; font-size: 12px; }
-        .sign-table th, .sign-table td { border: 1px solid #1f2937; padding: 2px; }
-        .sign-table th { background-color: #f3f4f6; width: 25px; writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 2px; }
-        .sign-table td { width: 60px; height: 60px; vertical-align: middle; }
+        .official-hr { border-top: 2px solid black; margin: 15px 0; }
+        
+        /* 트리 뷰(장부) 스타일 */
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary i.tree-icon { transform: rotate(90deg); }
+        .tree-icon { transition: transform 0.2s ease-in-out; }
     </style>
 </head>
 <body class="text-slate-800">
@@ -50,10 +45,10 @@
                     <i data-lucide="file-check-2" class="w-4 h-4"></i><span class="font-medium text-sm">전자결재 및 공문</span>
                 </button>
                 <button onclick="changeTab('ledger')" class="tab-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all hover:bg-slate-800 hover:text-white" id="pc-ledger">
-                    <i data-lucide="book-open" class="w-4 h-4"></i><span class="font-medium text-sm">재무 및 장부관리</span>
+                    <i data-lucide="book-open" class="w-4 h-4"></i><span class="font-medium text-sm">장부 및 재무제표</span>
                 </button>
                 <button onclick="changeTab('hr')" class="tab-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all hover:bg-slate-800 hover:text-white" id="pc-hr">
-                    <i data-lucide="users" class="w-4 h-4"></i><span class="font-medium text-sm">인사 및 급여 (HR)</span>
+                    <i data-lucide="users" class="w-4 h-4"></i><span class="font-medium text-sm">급여명세 관리</span>
                 </button>
             </nav>
             <div class="mt-auto p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
@@ -72,55 +67,83 @@
                 </div>
             </header>
 
-            <div id="content" class="flex-1 overflow-y-auto p-4 md:p-8 pb-32 no-scrollbar relative">
+            <div id="content" class="flex-1 overflow-y-auto p-4 md:p-8 pb-32 relative">
                 
-                <section id="tab-dashboard" class="content-section max-w-6xl mx-auto space-y-6">
-                    <div>
-                        <h3 class="text-2xl font-black text-slate-800 tracking-tight">경영 현황 대시보드</h3>
-                        <p class="text-sm text-slate-500 mt-1">2026년도 재무 및 결재 현황을 요약합니다.</p>
+                <section id="tab-dashboard" class="content-section max-w-7xl mx-auto flex flex-col h-full">
+                    <div class="mb-4 shrink-0">
+                        <h3 class="text-2xl font-black text-slate-800 tracking-tight">경영 현황</h3>
                     </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-[600px]">
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col cursor-pointer hover:shadow-md transition" onclick="changeTab('approval')">
+                            <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center border-b pb-2"><i data-lucide="file-signature" class="w-4 h-4 mr-2 text-blue-600"></i>최근 결재 문서</h4>
+                            <div class="space-y-3 flex-1 overflow-y-auto no-scrollbar" id="dash-docs">
+                                </div>
+                        </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <p class="text-xs font-bold text-slate-400 uppercase">결재 대기</p>
-                            <p class="text-2xl font-black text-slate-800 mt-1 num-font" id="dash-pending">1건</p>
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col cursor-pointer hover:shadow-md transition" onclick="changeTab('ledger')">
+                            <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center border-b pb-2"><i data-lucide="scale" class="w-4 h-4 mr-2 text-blue-600"></i>재무상태표 (B/S) 요약</h4>
+                            <div class="space-y-4 flex-1 flex flex-col justify-center">
+                                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100"><span class="font-bold text-slate-600">자산 총계</span><span class="text-lg font-black num-font">₩ 125,000,000</span></div>
+                                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100"><span class="font-bold text-slate-600">부채 총계</span><span class="text-lg font-black num-font">₩ 45,000,000</span></div>
+                                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100"><span class="font-bold text-blue-800">자본 총계</span><span class="text-xl font-black text-blue-600 num-font">₩ 80,000,000</span></div>
+                            </div>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <p class="text-xs font-bold text-slate-400 uppercase">26년 누적 매출</p>
-                            <p class="text-2xl font-black text-blue-600 mt-1 num-font">₩ 15,000,000</p>
+
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col cursor-pointer hover:shadow-md transition" onclick="changeTab('ledger')">
+                            <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center border-b pb-2"><i data-lucide="trending-up" class="w-4 h-4 mr-2 text-green-600"></i>손익계산서 (I/S) 요약</h4>
+                            <div class="space-y-4 flex-1 flex flex-col justify-center">
+                                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100"><span class="font-bold text-slate-600">매출액</span><span class="text-lg font-black num-font text-blue-600">₩ 15,000,000</span></div>
+                                <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100"><span class="font-bold text-slate-600">매출원가 및 판관비</span><span class="text-lg font-black num-font text-red-500">- ₩ 4,215,000</span></div>
+                                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-100"><span class="font-bold text-green-800">당기순이익</span><span class="text-xl font-black text-green-600 num-font">₩ 10,785,000</span></div>
+                            </div>
                         </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                            <p class="text-xs font-bold text-slate-400 uppercase">26년 누적 지출</p>
-                            <p class="text-2xl font-black text-red-500 mt-1 num-font">₩ 4,215,000</p>
-                        </div>
-                        <div class="bg-slate-800 p-5 rounded-2xl shadow-md text-white">
-                            <p class="text-xs font-bold text-slate-400 uppercase">다음 세무 일정</p>
-                            <p class="text-lg font-black text-white mt-1">4.25 부가세 신고</p>
-                            <p class="text-xs text-blue-300 mt-1">예상: ₩ 3,450,000</p>
+
+                        <div class="bg-slate-800 rounded-2xl shadow-lg p-6 flex flex-col text-white">
+                            <h4 class="text-sm font-bold text-slate-300 mb-4 flex items-center border-b border-slate-700 pb-2"><i data-lucide="calendar-clock" class="w-4 h-4 mr-2"></i>세무 일정 (Tax Schedule)</h4>
+                            <div class="space-y-4 flex-1 overflow-y-auto no-scrollbar pr-2">
+                                <div class="pl-4 border-l-2 border-red-500">
+                                    <p class="text-[11px] text-red-400 font-bold mb-0.5">2026.04.25</p>
+                                    <p class="font-bold text-sm">26년 1기 부가가치세 예정신고</p>
+                                </div>
+                                <div class="pl-4 border-l-2 border-orange-500">
+                                    <p class="text-[11px] text-orange-400 font-bold mb-0.5">2026.05.10</p>
+                                    <p class="font-bold text-sm">원천징수이행상황신고 (4월분)</p>
+                                </div>
+                                <div class="pl-4 border-l-2 border-blue-500">
+                                    <p class="text-[11px] text-blue-400 font-bold mb-0.5">2026.05.31</p>
+                                    <p class="font-bold text-sm">종합소득세 확정신고</p>
+                                </div>
+                                <div class="pl-4 border-l-2 border-purple-500">
+                                    <p class="text-[11px] text-purple-400 font-bold mb-0.5">2026.07.25</p>
+                                    <p class="font-bold text-sm">26년 1기 부가가치세 확정신고</p>
+                                </div>
+                                <div class="pl-4 border-l-2 border-slate-500 opacity-60">
+                                    <p class="text-[11px] text-slate-400 font-bold mb-0.5">2026.08.31</p>
+                                    <p class="font-bold text-sm">법인세 중간예납 신고납부</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <section id="tab-approval" class="content-section hidden max-w-6xl mx-auto space-y-6">
-                    <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-                        <div>
-                            <h3 class="text-2xl font-black text-slate-800 tracking-tight">전자결재 및 공문함</h3>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="openModal('online-modal')" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md hover:bg-blue-700 transition flex items-center">
-                                <i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i>기안 작성
-                            </button>
-                        </div>
+                <section id="tab-approval" class="content-section hidden max-w-7xl mx-auto space-y-6">
+                    <div class="flex justify-between items-end">
+                        <h3 class="text-2xl font-black text-slate-800 tracking-tight">전자결재 및 공문함</h3>
+                        <button onclick="openModal('online-modal')" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow-md hover:bg-blue-700 transition flex items-center">
+                            <i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i>기안 작성
+                        </button>
                     </div>
 
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
                                 <tr>
+                                    <th class="p-4 w-28 text-center">상태</th>
                                     <th class="p-4 w-32">기안일자</th>
+                                    <th class="p-4 w-32">승인일자</th>
                                     <th class="p-4 w-40">문서번호</th>
-                                    <th class="p-4">문서제목</th>
-                                    <th class="p-4 w-24 text-center">결재상태</th>
+                                    <th class="p-4">제목</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100" id="approval-list">
@@ -129,53 +152,79 @@
                     </div>
                 </section>
 
-                <section id="tab-ledger" class="content-section hidden max-w-6xl mx-auto space-y-6">
-                    <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
-                        <h3 class="text-2xl font-black text-slate-800 tracking-tight">재무 및 장부관리</h3>
-                        <div class="flex space-x-2">
-                            <select id="ledger-year" onchange="renderLedgers()" class="bg-white border border-slate-300 text-sm font-bold px-4 py-2 rounded-lg outline-none">
-                                <option value="2026">2026년도 장부</option>
-                                <option value="2025">2025년도 장부</option>
-                            </select>
+                <section id="tab-ledger" class="content-section hidden max-w-7xl mx-auto space-y-6">
+                    <h3 class="text-2xl font-black text-slate-800 tracking-tight">장부 및 재무제표 (트리형)</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm overflow-y-auto max-h-[700px]">
+                            <h4 class="font-black text-lg border-b pb-3 mb-4 text-blue-800">재무상태표 (B/S)</h4>
+                            <div class="text-sm space-y-2">
+                                <details class="group" open>
+                                    <summary class="cursor-pointer font-bold p-2 bg-slate-100 rounded-md hover:bg-slate-200 flex items-center"><i data-lucide="chevron-right" class="tree-icon w-4 h-4 mr-1"></i>자산</summary>
+                                    <div class="pl-6 mt-1 space-y-1">
+                                        <details class="group">
+                                            <summary class="cursor-pointer font-medium p-1.5 hover:bg-slate-50 flex items-center"><i data-lucide="chevron-right" class="tree-icon w-3 h-3 mr-1"></i>유동자산</summary>
+                                            <div class="pl-6 space-y-1 py-1">
+                                                <div class="flex justify-between p-1 text-slate-600 border-b border-slate-100 border-dashed"><span>보통예금 (국민은행)</span><span class="num-font font-mono">120,000,000</span></div>
+                                                <div class="flex justify-between p-1 text-slate-600 border-b border-slate-100 border-dashed"><span>매출채권</span><span class="num-font font-mono">5,000,000</span></div>
+                                            </div>
+                                        </details>
+                                        <details class="group">
+                                            <summary class="cursor-pointer font-medium p-1.5 hover:bg-slate-50 flex items-center"><i data-lucide="chevron-right" class="tree-icon w-3 h-3 mr-1"></i>비유동자산</summary>
+                                            <div class="pl-6 space-y-1 py-1">
+                                                <div class="flex justify-between p-1 text-slate-600 border-b border-slate-100 border-dashed"><span>임차보증금</span><span class="num-font font-mono">0</span></div>
+                                            </div>
+                                        </details>
+                                    </div>
+                                </details>
+                                <details class="group mt-4">
+                                    <summary class="cursor-pointer font-bold p-2 bg-slate-100 rounded-md hover:bg-slate-200 flex items-center"><i data-lucide="chevron-right" class="tree-icon w-4 h-4 mr-1"></i>부채</summary>
+                                    <div class="pl-6 mt-1 space-y-1">
+                                        <div class="flex justify-between p-1 text-slate-600 border-b border-slate-100 border-dashed"><span>미지급금</span><span class="num-font font-mono">5,000,000</span></div>
+                                        <div class="flex justify-between p-1 text-slate-600 border-b border-slate-100 border-dashed"><span>단기차입금</span><span class="num-font font-mono">40,000,000</span></div>
+                                    </div>
+                                </details>
+                                <details class="group mt-4">
+                                    <summary class="cursor-pointer font-bold p-2 bg-slate-100 rounded-md hover:bg-slate-200 flex items-center"><i data-lucide="chevron-right" class="tree-icon w-4 h-4 mr-1"></i>자본</summary>
+                                    <div class="pl-6 mt-1 space-y-1">
+                                        <div class="flex justify-between p-1 text-slate-600 border-b border-slate-100 border-dashed"><span>자본금</span><span class="num-font font-mono">80,000,000</span></div>
+                                    </div>
+                                </details>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-                            <span class="text-sm font-bold text-slate-700">계정별 원장 상세</span>
-                            <select id="ledger-filter" onchange="renderLedgers()" class="text-xs p-1.5 border border-slate-300 rounded outline-none font-bold bg-white">
-                                <option value="all">전체 계정 보기</option>
-                                <option value="#매출">매출</option>
-                                <option value="#지급임차료">지급임차료</option>
-                                <option value="#지급수수료">지급수수료</option>
-                                <option value="#차량유지비">차량유지비</option>
-                            </select>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm whitespace-nowrap">
-                                <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
-                                    <tr>
-                                        <th class="p-3 text-center">일자</th>
-                                        <th class="p-3">계정과목</th>
-                                        <th class="p-3">적요(메모)</th>
-                                        <th class="p-3">거래처</th>
-                                        <th class="p-3 text-right">차변(지출)</th>
-                                        <th class="p-3 text-right">대변(수입)</th>
-                                        <th class="p-3 text-right">잔액</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100" id="ledger-list">
-                                    </tbody>
-                            </table>
+                        <div class="space-y-6">
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                                <h4 class="font-bold text-sm mb-4">빠른 장부 입력</h4>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <input type="date" id="l-date" class="p-2 border rounded-lg text-sm bg-slate-50">
+                                    <input type="number" id="l-amount" placeholder="금액 (지출은 -)" class="p-2 border rounded-lg text-sm bg-slate-50 font-bold">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <select id="l-tag" class="p-2 border rounded-lg text-sm bg-slate-50 font-bold"><option value="#지급임차료">지급임차료</option><option value="#복리후생비">복리후생비</option><option value="#매출">매출</option></select>
+                                    <input type="text" id="l-memo" placeholder="적요 및 거래처" class="p-2 border rounded-lg text-sm bg-slate-50">
+                                </div>
+                                <button onclick="addLedgerEntry()" class="w-full bg-slate-800 text-white font-bold p-3 rounded-lg shadow hover:bg-slate-900">내역 등록</button>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="p-4 bg-slate-50 border-b font-bold text-sm text-slate-700">최근 입력 장부</div>
+                                <div class="overflow-y-auto max-h-[300px]">
+                                    <table class="w-full text-left text-xs whitespace-nowrap">
+                                        <tbody class="divide-y divide-slate-100" id="ledger-recent-list">
+                                            </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <section id="tab-hr" class="content-section hidden max-w-6xl mx-auto space-y-6">
+                <section id="tab-hr" class="content-section hidden max-w-7xl mx-auto space-y-6">
                     <div class="flex justify-between items-end">
-                        <h3 class="text-2xl font-black text-slate-800 tracking-tight">인사 및 급여 (HR)</h3>
-                        <button onclick="alert('명세서 발급 로직이 작동합니다.')" class="bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:bg-slate-900 transition">
-                            명세서 신규 발급
+                        <h3 class="text-2xl font-black text-slate-800 tracking-tight">급여명세서 관리</h3>
+                        <button onclick="openModal('paystub-create-modal')" class="bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:bg-emerald-700 transition">
+                            <i data-lucide="plus" class="w-4 h-4 inline mr-1"></i>명세서 신규 발급
                         </button>
                     </div>
 
@@ -185,9 +234,9 @@
                                 <tr>
                                     <th class="p-4 w-32">귀속월</th>
                                     <th class="p-4 w-40">대상자</th>
-                                    <th class="p-4 text-right">과세/비과세 총액</th>
+                                    <th class="p-4 text-right">총지급액</th>
                                     <th class="p-4 text-right">공제 총액</th>
-                                    <th class="p-4 text-right font-black text-blue-600">차인지급액 (실지급)</th>
+                                    <th class="p-4 text-right font-black text-emerald-600">차인지급액 (실지급)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100" id="paystub-list">
@@ -196,219 +245,183 @@
                     </div>
                 </section>
             </div>
-
-            <nav class="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 px-2 py-2 flex justify-between items-center pb-safe z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                <button onclick="changeTab('dashboard')" class="tab-btn flex flex-col items-center p-2 text-blue-600 w-1/4" id="mobile-dashboard"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-bold">홈</span></button>
-                <button onclick="changeTab('approval')" class="tab-btn flex flex-col items-center p-2 text-slate-400 w-1/4" id="mobile-approval"><i data-lucide="file-check-2" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-bold">결재</span></button>
-                <button onclick="changeTab('ledger')" class="tab-btn flex flex-col items-center p-2 text-slate-400 w-1/4" id="mobile-ledger"><i data-lucide="book-open" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-bold">장부</span></button>
-                <button onclick="changeTab('hr')" class="tab-btn flex flex-col items-center p-2 text-slate-400 w-1/4" id="mobile-hr"><i data-lucide="users" class="w-5 h-5"></i><span class="text-[10px] mt-1 font-bold">HR</span></button>
-            </nav>
         </main>
     </div>
 
-    <div id="doc-viewer-modal" class="modal-bg fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-2 z-[200] backdrop-blur-sm overflow-y-auto">
+    <div id="doc-viewer-modal" class="modal-bg fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-2 z-[200] overflow-y-auto" onclick="if(event.target === this) closeModal('doc-viewer-modal')">
         <div class="relative w-full max-w-4xl my-8 flex flex-col items-center">
             
-            <div class="w-full max-w-[794px] bg-white rounded-t-xl p-4 flex justify-between items-center border-b border-slate-200">
-                <span class="font-bold text-slate-700" id="v-modal-title">문서 조회</span>
+            <div class="w-full max-w-[794px] bg-slate-800 text-white rounded-t-xl p-3 flex justify-between items-center shadow-lg">
+                <span class="font-bold text-sm">기안문서 뷰어</span>
                 <div class="space-x-2">
-                    <button id="btn-approve" onclick="approveDoc()" class="hidden bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-bold shadow-sm">결재 승인</button>
-                    <button onclick="closeModal('doc-viewer-modal')" class="bg-slate-100 border border-slate-300 text-slate-700 px-4 py-1.5 rounded text-sm font-bold hover:bg-slate-200">닫기</button>
+                    <button id="btn-approve" onclick="approveDoc()" class="hidden bg-blue-500 text-white px-4 py-1.5 rounded text-sm font-bold shadow">결재 승인</button>
+                    <button onclick="closeModal('doc-viewer-modal')" class="bg-slate-600 text-white px-4 py-1.5 rounded text-sm font-bold hover:bg-slate-500">닫기</button>
                 </div>
             </div>
 
             <div class="a4-paper relative" id="official-doc-area">
-                <div class="text-center mb-10"><h1 class="text-4xl font-black tracking-[0.3em] text-black">유한책임회사 흥진파트너스</h1></div>
+                <div class="text-center mb-16"><h1 class="text-4xl font-black tracking-[0.4em] text-black">유한책임회사 흥진파트너스</h1></div>
                 
-                <div class="flex justify-between items-start mb-6">
-                    <table class="official-table w-[60%]">
-                        <tbody>
-                            <tr><th>문서번호</th><td id="v-docno" class="font-bold text-blue-700"></td></tr>
-                            <tr><th>시행일자</th><td id="v-date"></td></tr>
-                            <tr><th>수신</th><td id="v-target" class="font-bold">디딤이앤에프 대표이사</td></tr>
-                            <tr><th>참조</th><td>재무담당자</td></tr>
-                        </tbody>
-                    </table>
-
-                    <table class="sign-table ml-4">
-                        <tr>
-                            <th rowspan="2">결<br>재</th>
-                            <td class="bg-slate-50 font-bold h-6">기안</td>
-                            <td class="bg-slate-50 font-bold h-6">검토</td>
-                            <td class="bg-slate-50 font-bold h-6">승인</td>
-                        </tr>
-                        <tr>
-                            <td class="relative">
-                                <span class="text-slate-400">대표</span>
-                                <div class="absolute inset-0 flex items-center justify-center text-red-500 font-bold text-lg rotate-[-15deg] opacity-70">전결</div>
-                            </td>
-                            <td></td>
-                            <td class="relative" id="v-sign-final">
-                                </td>
-                        </tr>
-                    </table>
+                <div class="w-full text-[15px] font-medium leading-relaxed tracking-wide">
+                    <div class="flex items-center mb-2"><span class="w-24 font-bold inline-block">수신</span><input type="text" id="v-target" class="flex-1 bg-transparent outline-none" value="디딤이앤에프 대표이사"></div>
+                    <div class="flex items-center mb-2"><span class="w-24 font-bold inline-block">(경유)</span><span class="flex-1">재무담당자</span></div>
+                    <div class="flex items-center"><span class="w-24 font-bold inline-block">제목</span><input type="text" id="v-title" class="flex-1 font-bold bg-transparent outline-none border-b border-transparent focus:border-slate-300" readonly></div>
                 </div>
 
-                <div class="mb-4 mt-8 flex items-center border-b-2 border-black pb-2">
-                    <span class="font-bold text-lg w-16 shrink-0">제목 :</span>
-                    <input type="text" id="v-title" class="flex-1 font-bold text-lg border-none outline-none bg-transparent" readonly>
+                <div class="official-hr"></div>
+
+                <div class="flex-1 w-full pt-4 pb-8 min-h-[500px]">
+                    <textarea id="v-content" class="w-full h-full border-none outline-none bg-transparent resize-none leading-[1.8] text-[15px] font-medium" readonly></textarea>
                 </div>
 
-                <div class="min-h-[400px] py-4 text-base leading-relaxed">
-                    <textarea id="v-content" class="w-full h-full border-none outline-none bg-transparent resize-none leading-relaxed" readonly></textarea>
-                </div>
-
-                <div class="absolute bottom-20 left-0 right-0 flex justify-center items-center">
-                    <h2 class="text-3xl font-black tracking-[0.2em]">유한책임회사 흥진파트너스 대표</h2>
-                    <div id="v-seal" class="hidden absolute right-32 w-20 h-20 border-4 border-red-600 text-red-600 rounded-full flex justify-center items-center font-black text-lg rotate-12 opacity-80 select-none">직인<br>생략</div>
+                <div class="official-hr"></div>
+                
+                <div class="relative w-full text-center mt-12 mb-10">
+                    <h2 class="text-3xl font-black tracking-[0.3em]">유한책임회사 흥진파트너스 대표</h2>
+                    <div id="v-seal" class="hidden absolute left-1/2 ml-48 top-[-15px] w-20 h-20 border-4 border-red-600 text-red-600 rounded-full flex justify-center items-center font-black text-lg rotate-12 opacity-80 select-none">직인<br>생략</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="paystub-viewer-modal" class="modal-bg fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-[200]">
-        <div class="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
-            <div class="bg-slate-800 p-4 flex justify-between items-center text-white">
-                <h4 class="text-lg font-bold">급여명세서 (Payslip)</h4>
-                <button onclick="closeModal('paystub-viewer-modal')" class="text-slate-300 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div id="paystub-create-modal" class="modal-bg fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-[200]" onclick="if(event.target === this) closeModal('paystub-create-modal')">
+        <div class="bg-white rounded-xl w-full max-w-xl shadow-2xl p-6">
+            <h4 class="text-lg font-bold border-b pb-3 mb-4">급여명세서 작성 (수정 가능)</h4>
+            
+            <div class="grid grid-cols-2 gap-6 text-sm">
+                <div class="space-y-3">
+                    <h5 class="font-bold text-blue-700 bg-blue-50 p-2 rounded text-center">지급 (비과세 식대,차량)</h5>
+                    <div class="flex justify-between items-center"><span>기본급(과세)</span><input type="number" id="c-base" value="1000000" class="border p-1 w-24 text-right num-font" oninput="calcTax()"></div>
+                    <div class="flex justify-between items-center"><span>식대(비과세)</span><input type="number" id="c-meal" value="200000" class="border p-1 w-24 text-right num-font" oninput="calcTax()"></div>
+                    <div class="flex justify-between items-center"><span>차량유지(비과세)</span><input type="number" id="c-drive" value="200000" class="border p-1 w-24 text-right num-font" oninput="calcTax()"></div>
+                </div>
+                <div class="space-y-3">
+                    <h5 class="font-bold text-red-700 bg-red-50 p-2 rounded text-center">공제 (국민연금 제외)</h5>
+                    <div class="flex justify-between items-center text-slate-400"><span>국민연금(0%)</span><span>0</span></div>
+                    <div class="flex justify-between items-center"><span>건강보험(3.545%)</span><input type="number" id="c-health" value="35450" class="border p-1 w-20 text-right num-font"></div>
+                    <div class="flex justify-between items-center"><span>장기요양</span><input type="number" id="c-care" value="4590" class="border p-1 w-20 text-right num-font"></div>
+                    <div class="flex justify-between items-center"><span>고용보험(0.9%)</span><input type="number" id="c-emp" value="9000" class="border p-1 w-20 text-right num-font"></div>
+                    <div class="flex justify-between items-center"><span>근로소득세</span><input type="number" id="c-tax1" value="0" class="border p-1 w-20 text-right num-font text-blue-600 font-bold"></div>
+                    <div class="flex justify-between items-center"><span>지방소득세</span><input type="number" id="c-tax2" value="0" class="border p-1 w-20 text-right num-font text-blue-600 font-bold"></div>
+                </div>
             </div>
-            <div class="p-6">
-                <div class="flex justify-between items-end mb-4 pb-2 border-b-2 border-slate-800">
-                    <div>
-                        <h2 class="text-xl font-black text-slate-800" id="ps-title">2026년 3월 급여명세서</h2>
-                        <p class="text-sm text-slate-500 mt-1">성명: 대표 jwk930 (임원)</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs text-slate-500 font-bold">흥진파트너스</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-6 text-sm">
-                    <div>
-                        <div class="bg-blue-50 text-blue-800 font-bold p-2 text-center border-t-2 border-blue-600">지급내역 (Earnings)</div>
-                        <div class="border-b border-l border-r border-slate-200">
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">기본급 (과세)</span><span class="font-bold num-font text-slate-800">1,000,000</span></div>
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">식대 (비과세)</span><span class="font-bold num-font text-slate-800">200,000</span></div>
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">자가운전보조금 (비과세)</span><span class="font-bold num-font text-slate-800">200,000</span></div>
-                        </div>
-                        <div class="flex justify-between p-2 bg-slate-50 border-b border-l border-r border-slate-200 font-bold">
-                            <span>지급총액 [A]</span><span class="text-blue-600 num-font">1,400,000</span>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="bg-red-50 text-red-800 font-bold p-2 text-center border-t-2 border-red-600">공제내역 (Deductions)</div>
-                        <div class="border-b border-l border-r border-slate-200">
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">국민연금 (4.5%)</span><span class="font-bold num-font text-slate-800">45,000</span></div>
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">건강보험 (3.545%)</span><span class="font-bold num-font text-slate-800">35,450</span></div>
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">장기요양보험</span><span class="font-bold num-font text-slate-800">4,590</span></div>
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">고용보험 (0.9%)</span><span class="font-bold num-font text-slate-800">9,000</span></div>
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">근로소득세</span><span class="font-bold num-font text-slate-800">10,210</span></div>
-                            <div class="flex justify-between p-2 border-b border-slate-100"><span class="text-slate-600">지방소득세</span><span class="font-bold num-font text-slate-800">1,020</span></div>
-                        </div>
-                        <div class="flex justify-between p-2 bg-slate-50 border-b border-l border-r border-slate-200 font-bold">
-                            <span>공제총액 [B]</span><span class="text-red-600 num-font">105,270</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 p-4 bg-slate-800 text-white rounded-lg flex justify-between items-center">
-                    <span class="font-bold text-lg">차인지급액 (실지급액) [A - B]</span>
-                    <span class="font-black text-2xl num-font text-green-400 border-b border-green-400">₩ 1,294,730</span>
-                </div>
-                <p class="text-center text-xs text-slate-400 mt-4">* 본 명세서는 과세표준 1,000,000원을 기준으로 법정 요율을 적용하여 자동 산출되었습니다.</p>
+            
+            <div class="mt-6 flex space-x-2">
+                <button onclick="closeModal('paystub-create-modal')" class="flex-1 p-3 bg-slate-100 font-bold rounded">취소</button>
+                <button onclick="savePaystub()" class="flex-1 p-3 bg-emerald-600 text-white font-bold rounded">저장 및 명세서 발행</button>
             </div>
         </div>
     </div>
 
-    <div id="online-modal" class="modal-bg fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-[200]">
-        <div class="bg-white rounded-xl w-full max-w-md p-6">
-            <h4 class="text-xl font-bold mb-4">새 기안 작성</h4>
-            <input type="text" id="on-title" placeholder="문서 제목" class="w-full bg-slate-50 p-3 rounded border border-slate-200 mb-3">
-            <textarea id="on-content" rows="4" placeholder="상세 내용..." class="w-full bg-slate-50 p-3 rounded border border-slate-200 resize-none mb-4"></textarea>
+    <div id="online-modal" class="modal-bg fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-[200]" onclick="if(event.target === this) closeModal('online-modal')">
+        <div class="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl">
+            <h4 class="text-xl font-bold mb-4">새 공문 기안</h4>
+            <input type="text" id="on-title" placeholder="문서 제목" class="w-full bg-slate-50 p-3 rounded border border-slate-200 mb-3 font-bold">
+            <textarea id="on-content" rows="6" placeholder="내용을 입력하세요..." class="w-full bg-slate-50 p-3 rounded border border-slate-200 resize-none mb-4 leading-relaxed text-sm"></textarea>
             <div class="flex space-x-2"><button onclick="closeModal('online-modal')" class="flex-1 py-3 bg-slate-100 rounded font-bold">취소</button><button onclick="submitOnlineDoc()" class="flex-1 py-3 bg-blue-600 text-white rounded font-bold">상신</button></div>
         </div>
     </div>
 
     <script>
-        // Data Architecture (2025 & 2026 Integration)
+        // Data
         let docs = [
-            { id: 1, docNo: 'HJ-20260409-001', title: '제9회차 전환사채 조기상환청구 (디딤이앤에프)', date: '2026-04-09', status: '결재완료', content: '귀 사의 무궁한 발전을 기원합니다.\n\n당사는 귀 사가 발행한 제9회차 전환사채에 대하여 조기상환을 청구하오니, 기일 내에 상환하여 주시기 바랍니다.' },
-            { id: 2, docNo: 'HJ-20250115-001', title: '2025년 급여 지급 규정(비과세)', date: '2025-01-15', status: '결재완료', content: '당해년도 임원(대표이사) 급여 중 비과세 항목(식대 20만, 자가운전 20만) 적용의 건' },
-            { id: 3, docNo: '임시-003', title: '4월 차량유지비 지출결의', date: '2026-04-09', status: '결재대기', content: '업무용 차량 주유비 결제 건입니다.' }
+            { id: 1, docNo: 'HJ-20260409-001', title: '제9회차 전환사채 조기상환청구 (디딤이앤에프)', draftDate: '2026-04-09', approveDate: '2026-04-09', status: '결재완료', content: '1. 귀 사의 무궁한 발전을 기원합니다.\n\n2. 당사는 귀 사가 발행한 제9회차 전환사채에 대하여 조기상환을 청구하오니, 기일 내에 상환하여 주시기 바랍니다.' },
+            { id: 2, docNo: 'HJ-20250115-001', title: '2025년 급여 지급 규정(비과세)', draftDate: '2025-01-14', approveDate: '2025-01-15', status: '결재완료', content: '당해년도 임원(대표이사) 급여 중 비과세 항목(식대 20만, 자가운전 20만) 적용의 건' },
+            { id: 3, docNo: '-', title: '4월 차량유지비 지출결의', draftDate: '2026-04-09', approveDate: '-', status: '결재대기', content: '업무용 차량 주유비 결제 건입니다.' }
         ];
 
         let ledgers = [
-            // 2026
-            { id: 1, year: '2026', date: '2026-04-09', tag: '#지급수수료', memo: '세무기장료', target: 'OO회계법인', amount: -150000, balance: 4520000 },
-            { id: 2, year: '2026', date: '2026-03-25', tag: '#지급임차료', memo: '3월 사무실 월세', target: '흥진빌딩', amount: -1200000, balance: 4670000 },
-            { id: 3, year: '2026', date: '2026-03-10', tag: '#매출', memo: '자문 용역비', target: 'A컴퍼니', amount: 5000000, balance: 5870000 },
-            // 2025
-            { id: 4, year: '2025', date: '2025-12-25', tag: '#지급임차료', memo: '12월 사무실 월세', target: '흥진빌딩', amount: -1200000, balance: 870000 },
-            { id: 5, year: '2025', date: '2025-06-10', tag: '#매출', memo: '상반기 자문 용역비', target: 'B컴퍼니', amount: 10000000, balance: 2070000 }
+            { id: 1, date: '2026-04-09', tag: '#지급수수료', memo: '세무기장료', amount: -150000 },
+            { id: 2, date: '2026-03-25', tag: '#지급임차료', memo: '사무실 월세', amount: -1200000 },
+            { id: 3, date: '2026-03-10', tag: '#매출', memo: '자문 용역비', amount: 5000000 }
         ];
 
         let paystubs = [
-            { id: 1, month: '2026-03', target: '대표 jwk930', gross: 1400000, deduction: 105270, net: 1294730 },
-            { id: 2, month: '2026-02', target: '대표 jwk930', gross: 1400000, deduction: 105270, net: 1294730 }
+            { id: 1, month: '2026-03', target: '대표 jwk930', gross: 1400000, deduction: 49040, net: 1350960 }
         ];
 
         let currentDocId = null;
 
-        // Render Functions
+        // Renderer
         function renderDocs() {
-            document.getElementById('dash-pending').innerText = `${docs.filter(d=>d.status==='결재대기').length}건`;
             document.getElementById('approval-list').innerHTML = docs.map(d => `
-                <tr class="hover:bg-slate-50 cursor-pointer transition-colors" onclick="openDocViewer(${d.id})">
-                    <td class="p-4 text-slate-500 num-font">${d.date}</td>
+                <tr class="hover:bg-slate-50 cursor-pointer" onclick="openDocViewer(${d.id})">
+                    <td class="p-4 text-center"><span class="px-2.5 py-1 rounded text-[11px] font-bold ${d.status === '결재완료' ? 'bg-slate-100 text-slate-600' : 'bg-orange-100 text-orange-700'}">${d.status}</span></td>
+                    <td class="p-4 text-slate-500 num-font">${d.draftDate}</td>
+                    <td class="p-4 text-blue-600 font-medium num-font">${d.approveDate}</td>
                     <td class="p-4 font-medium text-slate-600">${d.docNo}</td>
                     <td class="p-4 font-bold text-slate-800">${d.title}</td>
-                    <td class="p-4 text-center">
-                        <span class="px-2.5 py-1 rounded text-[11px] font-bold ${d.status === '결재완료' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'}">${d.status}</span>
-                    </td>
                 </tr>
             `).join('');
-            lucide.createIcons();
+
+            // Dashboard Docs
+            document.getElementById('dash-docs').innerHTML = docs.slice(0,4).map(d => `
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100/50">
+                    <div class="truncate max-w-[70%]">
+                        <span class="text-[10px] font-bold mr-2 ${d.status==='결재대기'?'text-orange-500':'text-slate-400'}">${d.status}</span>
+                        <span class="text-sm font-bold text-slate-700">${d.title}</span>
+                    </div>
+                    <span class="text-xs text-slate-400 num-font">${d.draftDate}</span>
+                </div>
+            `).join('');
         }
 
         function renderLedgers() {
-            const yearFilter = document.getElementById('ledger-year').value;
-            const tagFilter = document.getElementById('ledger-filter').value;
-            
-            let filtered = ledgers.filter(l => l.year === yearFilter);
-            if(tagFilter !== 'all') filtered = filtered.filter(l => l.tag === tagFilter);
-
-            document.getElementById('ledger-list').innerHTML = filtered.map(l => `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="p-3 text-center text-slate-500 num-font">${l.date}</td>
+            document.getElementById('ledger-recent-list').innerHTML = ledgers.map(l => `
+                <tr class="hover:bg-slate-50">
+                    <td class="p-3 text-slate-500 num-font">${l.date}</td>
                     <td class="p-3 font-bold text-slate-700">${l.tag}</td>
                     <td class="p-3 text-slate-600">${l.memo}</td>
-                    <td class="p-3 text-slate-500">${l.target}</td>
-                    <td class="p-3 text-right num-font text-red-500 font-medium">${l.amount < 0 ? Math.abs(l.amount).toLocaleString() : '-'}</td>
-                    <td class="p-3 text-right num-font text-blue-600 font-medium">${l.amount > 0 ? l.amount.toLocaleString() : '-'}</td>
-                    <td class="p-3 text-right num-font font-bold text-slate-800">${l.balance.toLocaleString()}</td>
+                    <td class="p-3 text-right num-font font-bold ${l.amount < 0 ? 'text-red-500' : 'text-blue-600'}">${l.amount.toLocaleString()}</td>
                 </tr>
-            `).join('') || `<tr><td colspan="7" class="p-8 text-center text-slate-400">해당 조건의 데이터가 없습니다.</td></tr>`;
+            `).join('');
         }
 
         function renderPaystubs() {
             document.getElementById('paystub-list').innerHTML = paystubs.map(p => `
-                <tr class="hover:bg-slate-50 cursor-pointer transition-colors" onclick="openModal('paystub-viewer-modal')">
+                <tr class="hover:bg-slate-50 cursor-pointer transition-colors" onclick="alert('명세서 상세 보기 구현부')">
                     <td class="p-4 font-bold text-slate-700">${p.month}</td>
                     <td class="p-4 text-slate-600">${p.target}</td>
                     <td class="p-4 text-right num-font text-slate-600">₩ ${p.gross.toLocaleString()}</td>
                     <td class="p-4 text-right num-font text-red-500">- ₩ ${p.deduction.toLocaleString()}</td>
-                    <td class="p-4 text-right num-font font-black text-blue-600">₩ ${p.net.toLocaleString()}</td>
+                    <td class="p-4 text-right num-font font-black text-emerald-600">₩ ${p.net.toLocaleString()}</td>
                 </tr>
             `).join('');
         }
 
         // Actions
+        function calcTax() {
+            // [수정완료] 국민연금 X, 100만원 소득세 X 로직 동적 계산
+            let base = parseInt(document.getElementById('c-base').value) || 0;
+            document.getElementById('c-health').value = Math.floor(base * 0.03545);
+            document.getElementById('c-care').value = Math.floor(base * 0.03545 * 0.1295);
+            document.getElementById('c-emp').value = Math.floor(base * 0.009);
+            document.getElementById('c-tax1').value = base <= 1060000 ? 0 : Math.floor(base * 0.01); // 106만 이하 0원 처리
+            document.getElementById('c-tax2').value = base <= 1060000 ? 0 : Math.floor(base * 0.001);
+        }
+
+        function savePaystub() {
+            let base = parseInt(document.getElementById('c-base').value) || 0;
+            let meal = parseInt(document.getElementById('c-meal').value) || 0;
+            let drive = parseInt(document.getElementById('c-drive').value) || 0;
+            let h = parseInt(document.getElementById('c-health').value) || 0;
+            let c = parseInt(document.getElementById('c-care').value) || 0;
+            let e = parseInt(document.getElementById('c-emp').value) || 0;
+            let t1 = parseInt(document.getElementById('c-tax1').value) || 0;
+            let t2 = parseInt(document.getElementById('c-tax2').value) || 0;
+            
+            let gross = base + meal + drive;
+            let deduction = h + c + e + t1 + t2;
+            let net = gross - deduction;
+
+            paystubs.unshift({ id: Date.now(), month: '2026-04', target: '대표 jwk930', gross, deduction, net });
+            closeModal('paystub-create-modal');
+            renderPaystubs();
+        }
+
         function openDocViewer(id) {
             const doc = docs.find(d => d.id === id);
             currentDocId = id;
-            document.getElementById('v-docno').innerText = doc.docNo;
-            document.getElementById('v-date').innerText = doc.date;
             
             const titleEl = document.getElementById('v-title');
             const contentEl = document.getElementById('v-content');
@@ -420,17 +433,15 @@
             contentEl.readOnly = !isPending;
             
             if(isPending) {
-                titleEl.classList.add('border-b-2', 'border-blue-400', 'bg-blue-50/50');
-                contentEl.classList.add('bg-blue-50/50', 'p-4', 'rounded', 'border', 'border-blue-200');
+                titleEl.classList.add('bg-blue-50');
+                contentEl.classList.add('bg-blue-50/30', 'border', 'border-dashed', 'border-blue-200');
                 document.getElementById('btn-approve').classList.remove('hidden');
                 document.getElementById('v-seal').classList.add('hidden');
-                document.getElementById('v-sign-final').innerHTML = ''; // 서명란 비우기
             } else {
-                titleEl.classList.remove('border-b-2', 'border-blue-400', 'bg-blue-50/50');
-                contentEl.classList.remove('bg-blue-50/50', 'p-4', 'rounded', 'border', 'border-blue-200');
+                titleEl.classList.remove('bg-blue-50');
+                contentEl.classList.remove('bg-blue-50/30', 'border', 'border-dashed', 'border-blue-200');
                 document.getElementById('btn-approve').classList.add('hidden');
                 document.getElementById('v-seal').classList.remove('hidden'); 
-                document.getElementById('v-sign-final').innerHTML = '<span class="text-red-600 font-bold text-lg rotate-[-15deg] opacity-80 absolute inset-0 flex items-center justify-center">승인</span>';
             }
             openModal('doc-viewer-modal');
         }
@@ -440,7 +451,8 @@
             doc.title = document.getElementById('v-title').value;
             doc.content = document.getElementById('v-content').value;
             doc.status = '결재완료';
-            doc.docNo = `HJ-${doc.date.replace(/-/g, '')}-001`; // 정식번호 부여
+            doc.approveDate = '2026-04-09';
+            doc.docNo = `HJ-20260409-002`; // 채번
             closeModal('doc-viewer-modal');
             renderDocs();
         }
@@ -448,17 +460,26 @@
         function submitOnlineDoc() {
             const title = document.getElementById('on-title').value;
             const content = document.getElementById('on-content').value;
-            if(!title) return alert("기안 제목을 입력하세요.");
-            docs.unshift({ id: Date.now(), docNo: `임시-${Date.now().toString().slice(-4)}`, title, date: '2026-04-09', status: '결재대기', content });
+            if(!title) return;
+            docs.unshift({ id: Date.now(), docNo: '-', title, draftDate: '2026-04-09', approveDate: '-', status: '결재대기', content });
             closeModal('online-modal');
             renderDocs();
+        }
+
+        function addLedgerEntry() {
+            const amount = parseInt(document.getElementById('l-amount').value);
+            if(!amount) return;
+            ledgers.unshift({ 
+                id: Date.now(), date: document.getElementById('l-date').value, 
+                tag: document.getElementById('l-tag').value, memo: document.getElementById('l-memo').value, amount 
+            });
+            renderLedgers();
         }
 
         // Utils
         function changeTab(tab) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
             document.getElementById('tab-' + tab).classList.remove('hidden');
-            
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.classList.remove('text-white', 'bg-blue-600/20');
                 if(b.id.startsWith('pc')) b.classList.add('text-slate-300');
@@ -466,7 +487,6 @@
             });
             document.getElementById('pc-' + tab)?.classList.add('text-white', 'bg-blue-600/20');
             document.getElementById('pc-' + tab)?.classList.remove('text-slate-300');
-            
             document.getElementById('mobile-' + tab)?.classList.add('text-blue-600');
             document.getElementById('mobile-' + tab)?.classList.remove('text-slate-400');
         }
@@ -476,6 +496,8 @@
         // Init
         document.addEventListener('DOMContentLoaded', () => {
             renderDocs(); renderLedgers(); renderPaystubs(); changeTab('dashboard');
+            document.getElementById('l-date').value = '2026-04-09';
+            lucide.createIcons();
         });
     </script>
 </body>
