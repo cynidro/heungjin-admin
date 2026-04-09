@@ -3,102 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>흥진파트너스 관리시스템</title>
+    <title>흥진파트너스 ERP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', -apple-system, sans-serif; }
         .apple-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .active-tab { background-color: #f3f4f6; color: #2563eb; }
     </style>
 </head>
-<body class="bg-[#F2F2F7] text-black pb-24">
+<body class="bg-[#F2F2F7] text-black">
 
-    <header class="sticky top-0 z-50 bg-white/80 apple-blur border-b border-gray-200 px-5 py-4 flex justify-between items-center">
-        <h1 class="text-[17px] font-bold tracking-tight whitespace-nowrap">유한책임회사 흥진파트너스</h1>
-        <i data-lucide="search" class="w-5 h-5 text-blue-600"></i>
-    </header>
-
-    <main class="p-4 space-y-6 max-w-lg mx-auto">
+    <div id="app" class="flex h-screen overflow-hidden">
         
-        <section class="grid grid-cols-2 gap-3">
-            <div class="bg-white p-4 rounded-2xl shadow-sm">
-                <p class="text-[11px] font-bold text-gray-400 uppercase">2026 거래건수</p>
-                <p class="text-xl font-black mt-1 text-blue-600">진행 중</p>
+        <aside class="hidden md:flex flex-col w-72 bg-white border-r border-gray-200 p-6">
+            <div class="mb-10 px-2">
+                <h1 class="text-xl font-black tracking-tighter text-blue-600">HEUNGJIN</h1>
+                <p class="text-[11px] font-bold text-gray-400 mt-1 uppercase">Partners Cloud ERP</p>
             </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm">
-                <p class="text-[11px] font-bold text-gray-400 uppercase">미결재 문서</p>
-                <p class="text-xl font-black mt-1 text-orange-500">2건</p>
+            <nav class="flex-1 space-y-1">
+                <button onclick="changeTab('approval')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50 text-gray-600" id="pc-approval">
+                    <i data-lucide="clipboard-check" class="w-5 h-5"></i><span class="font-semibold text-[15px]">전자결재</span>
+                </button>
+                <button onclick="changeTab('ledger')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50 text-gray-600" id="pc-ledger">
+                    <i data-lucide="pie-chart" class="w-5 h-5"></i><span class="font-semibold text-[15px]">장부관리</span>
+                </button>
+                <button onclick="changeTab('settings')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all hover:bg-gray-50 text-gray-600" id="pc-settings">
+                    <i data-lucide="settings" class="w-5 h-5"></i><span class="font-semibold text-[15px]">설정</span>
+                </button>
+            </nav>
+            <div class="mt-auto p-4 bg-gray-50 rounded-2xl">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-1">Login</p>
+                <p class="text-sm font-bold">대표 jwk930 님</p>
             </div>
-        </section>
+        </aside>
 
-        <section class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-            <h3 class="text-sm font-bold mb-5 flex items-center">
-                <i data-lucide="plus-circle" class="w-4 h-4 mr-2 text-blue-600"></i> 새 거래 등록
-            </h3>
-            <div class="space-y-5">
-                <div>
-                    <input type="number" placeholder="₩ 0" class="w-full text-3xl font-bold p-0 border-none focus:ring-0 outline-none placeholder-gray-200">
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            
+            <header class="bg-white/80 apple-blur border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
+                <h2 class="text-[17px] font-bold tracking-tight">유한책임회사 흥진파트너스</h2>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 text-gray-400"><i data-lucide="bell" class="w-5 h-5"></i></button>
+                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs">JW</div>
                 </div>
+            </header>
+
+            <div id="content" class="flex-1 overflow-y-auto p-4 md:p-8 pb-32 no-scrollbar">
                 
-                <div>
-                    <p class="text-[11px] font-bold text-blue-600 mb-2">태그 (계정과목)</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button class="px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 text-xs font-semibold border border-blue-100">#복리후생비</button>
-                        <button class="px-3 py-1.5 rounded-full bg-gray-50 text-gray-500 text-xs font-medium border border-gray-100">#지급임차료</button>
-                        <button class="px-3 py-1.5 rounded-full bg-gray-50 text-gray-500 text-xs font-medium border border-gray-100">#여비교통비</button>
-                        <button class="px-3 py-1.5 rounded-full bg-gray-50 text-gray-500 text-xs font-medium border border-gray-100">#매출</button>
-                        <button class="px-3 py-1.5 rounded-full bg-blue-600 text-white text-xs font-bold w-7 h-7 flex items-center justify-center">+</button>
+                <section id="tab-approval" class="content-section space-y-6 max-w-4xl mx-auto">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <h3 class="text-2xl font-black tracking-tight">전자결재</h3>
+                            <p class="text-sm text-gray-500 mt-1">사내 중요 결재 문서를 관리합니다.</p>
+                        </div>
+                        <button onclick="openOfflineModal()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-100 flex items-center">
+                            <i data-lucide="plus" class="w-4 h-4 mr-1"></i> 오프라인 등재
+                        </button>
                     </div>
-                </div>
 
-                <div class="space-y-3">
-                    <input type="text" placeholder="결제수단 (ex. 보통예금)" class="w-full p-3 bg-[#F2F2F7] rounded-xl text-sm outline-none border-none">
-                    <input type="text" placeholder="메모 (거래처 및 내역)" class="w-full p-3 bg-[#F2F2F7] rounded-xl text-sm outline-none border-none">
-                </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                            <p class="text-[11px] font-bold text-blue-600 uppercase">결재 대기</p>
+                            <p class="text-2xl font-black mt-1">2건</p>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                            <p class="text-[11px] font-bold text-green-600 uppercase">최근 완료</p>
+                            <p class="text-2xl font-black mt-1">15건</p>
+                        </div>
+                    </div>
 
-                <button class="w-full py-4 bg-gray-100 text-gray-400 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-gray-200 active:bg-gray-200 transition-all">
-                    <i data-lucide="camera" class="w-6 h-6 mb-1"></i>
-                    <span class="text-[10px] font-bold">오프라인 영수증/문서 등재</span>
-                </button>
+                    <div class="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+                        <div class="p-4 bg-gray-50 border-b border-gray-100">
+                            <span class="text-xs font-bold text-gray-500">전체 문서함</span>
+                        </div>
+                        <div class="divide-y divide-gray-50" id="approval-list">
+                            </div>
+                    </div>
+                </section>
 
-                <button class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-[15px] shadow-lg shadow-blue-100 active:scale-[0.98] transition-all">
-                    장부 기록하기
-                </button>
-            </div>
-        </section>
-
-        <section class="space-y-3">
-            <h3 class="text-sm font-bold text-gray-500 ml-1">최근 전자결재</h3>
-            <div class="bg-white rounded-3xl overflow-hidden divide-y divide-gray-50">
-                <div class="p-4 flex justify-between items-center">
+                <section id="tab-ledger" class="content-section hidden space-y-6 max-w-4xl mx-auto">
                     <div>
-                        <p class="text-sm font-bold text-gray-800">제9회차 전환사채 조기상환</p>
-                        <p class="text-[10px] text-gray-400 mt-1">2026.04.09 · 결재완료</p>
+                        <h3 class="text-2xl font-black tracking-tight">장부관리</h3>
+                        <p class="text-sm text-gray-500 mt-1">실시간 거래 내역 및 태그 기반 통계입니다.</p>
                     </div>
-                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-300"></i>
+
+                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 mb-1 block">거래 금액</label>
+                                <input type="number" id="l-amount" placeholder="₩ 0" class="w-full text-2xl font-bold p-0 border-none focus:ring-0 outline-none placeholder-gray-200">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-400 mb-1 block">태그 선택</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button class="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100">#복리후생비</button>
+                                    <button class="px-3 py-1 rounded-full bg-gray-50 text-gray-500 text-xs font-bold border border-gray-100">#지급임차료</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="date" id="l-date" class="bg-gray-50 p-3 rounded-xl text-sm outline-none border-none">
+                            <input type="text" id="l-target" placeholder="거래처" class="bg-gray-50 p-3 rounded-xl text-sm outline-none border-none">
+                            <input type="text" id="l-memo" placeholder="적요(상세내용)" class="bg-gray-50 p-3 rounded-xl text-sm outline-none border-none">
+                        </div>
+                        <button class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-100">내역 등록 및 장부 업데이트</button>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+                        <div class="p-4 flex justify-between items-center bg-gray-50 border-b border-gray-100">
+                            <span class="text-xs font-bold text-gray-500">최근 거래 내역 (2026)</span>
+                            <button class="text-[11px] font-black text-blue-600 flex items-center"><i data-lucide="download" class="w-3 h-3 mr-1"></i> 장부 EXCEL 추출</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50/50 text-gray-400 font-bold border-b border-gray-50">
+                                    <tr>
+                                        <th class="p-4">날짜</th><th class="p-4">태그/적요</th><th class="p-4 text-right">차변</th><th class="p-4 text-right">대변</th><th class="p-4 text-right">잔액</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50" id="ledger-list">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tab-settings" class="content-section hidden space-y-6 max-w-4xl mx-auto">
+                    <div>
+                        <h3 class="text-2xl font-black tracking-tight">설정</h3>
+                        <p class="text-sm text-gray-500 mt-1">시스템 환경 및 법인 정보를 관리합니다.</p>
+                    </div>
+
+                    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-50 overflow-hidden">
+                        <SettingItem icon="building-2" title="법인 정보 관리" desc="사업자번호: 461-24-97030 / 대표자 변경 등" />
+                        <SettingItem icon="shield-check" title="보안 및 권한" desc="접속 기기 제한 및 2단계 인증 설정" />
+                        <SettingItem icon="database" title="데이터 관리" desc="GitHub 저장소 연동 및 클라우드 백업 상태" />
+                        <SettingItem icon="bell" title="알림 설정" desc="전자결재 승인 시 푸시 알림 및 이메일 전송" />
+                        <SettingItem icon="help-circle" title="업데이트 및 수정 요청" desc="시니어 디자이너에게 기능 개선 코드를 요청합니다" />
+                    </div>
+                </section>
+            </div>
+
+            <nav class="md:hidden fixed bottom-0 w-full bg-white/90 apple-blur border-t border-gray-200 px-8 py-3 flex justify-between items-center pb-safe z-20">
+                <button onclick="changeTab('approval')" class="tab-btn flex flex-col items-center text-gray-400" id="mobile-approval">
+                    <i data-lucide="clipboard-check" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1">결재</span>
+                </button>
+                <button onclick="changeTab('ledger')" class="tab-btn flex flex-col items-center text-gray-400" id="mobile-ledger">
+                    <i data-lucide="pie-chart" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1">장부</span>
+                </button>
+                <button onclick="changeTab('settings')" class="tab-btn flex flex-col items-center text-gray-400" id="mobile-settings">
+                    <i data-lucide="settings" class="w-6 h-6"></i><span class="text-[10px] font-bold mt-1">설정</span>
+                </button>
+            </nav>
+        </main>
+    </div>
+
+    <div id="offline-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-[100] backdrop-blur-sm">
+        <div class="bg-white rounded-[2rem] w-full max-w-md p-6 space-y-5 shadow-2xl">
+            <h4 class="text-xl font-black">오프라인 문서 등재</h4>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 mb-1 block">문서 제목</label>
+                    <input type="text" placeholder="예: 4월 관리비 영수증" class="w-full bg-gray-50 p-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-400 mb-1 block">날짜</label>
+                    <input type="date" class="w-full bg-gray-50 p-4 rounded-2xl outline-none">
+                </div>
+                <div class="border-2 border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center text-gray-400 cursor-pointer hover:bg-gray-50">
+                    <i data-lucide="camera" class="w-8 h-8 mb-2 text-blue-600"></i>
+                    <span class="text-sm font-bold">문서 스캔 또는 파일 선택</span>
                 </div>
             </div>
-        </section>
-    </main>
-
-    <nav class="fixed bottom-0 w-full bg-white/90 apple-blur border-t border-gray-200 px-6 py-3 flex justify-between items-center pb-safe">
-        <div class="flex flex-col items-center text-blue-600">
-            <i data-lucide="file-text" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold mt-1">결재</span>
+            <div class="flex space-x-3">
+                <button onclick="closeOfflineModal()" class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-bold">취소</button>
+                <button class="flex-2 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold">문서 등록</button>
+            </div>
         </div>
-        <div class="flex flex-col items-center text-gray-400">
-            <i data-lucide="pie-chart" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold mt-1">장부</span>
-        </div>
-        <div class="flex flex-col items-center text-gray-400">
-            <i data-lucide="settings" class="w-6 h-6"></i>
-            <span class="text-[10px] font-bold mt-1">설정</span>
-        </div>
-    </nav>
+    </div>
 
     <script>
-        lucide.createIcons();
+        // 초기 데이터 (주신 엑셀 2026 계정별원장 기반) 
+        const sampleLedger = [
+            { date: '2026.04.09', memo: '#지급수수료 / 전자결재 이용료', debit: '15,000', credit: '0', balance: '4,520,000' },
+            { date: '2026.03.25', memo: '#지급임차료 / 3월 사무실 월세', debit: '1,200,000', credit: '0', balance: '4,535,000' },
+            { date: '2026.03.10', memo: '#매출 / 자문 용역비 입금', debit: '0', credit: '5,000,000', balance: '5,735,000' }
+        ];
+
+        const sampleDocs = [
+            { title: '제9회차 전환사채 조기상환청구', date: '2026.04.09', status: '결재완료', type: '공문서' },
+            { title: '2025년 급여 지급 규정(비과세)', date: '2025.01.15', status: '결재완료', type: '급여규정' },
+            { title: '1분기 운영비 지출 결의', date: '2025.04.10', status: '임시저장', type: '지출결의서' }
+        ];
+
+        // 탭 전환 기능
+        function changeTab(tabName) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('text-blue-600', 'bg-gray-50'));
+            document.getElementById('pc-' + tabName).classList.add('text-blue-600', 'bg-gray-50');
+            document.getElementById('mobile-' + tabName).classList.add('text-blue-600');
+        }
+
+        // 모달 열고 닫기
+        function openOfflineModal() { document.getElementById('offline-modal').classList.replace('hidden', 'flex'); }
+        function closeOfflineModal() { document.getElementById('offline-modal').classList.replace('hidden', 'hidden'); }
+
+        // 데이터 렌더링
+        function renderData() {
+            const lList = document.getElementById('ledger-list');
+            lList.innerHTML = sampleLedger.map(l => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-4 font-medium text-gray-500">${l.date}</td>
+                    <td class="p-4"><p class="font-bold">${l.memo.split(' / ')[0]}</p><p class="text-xs text-gray-400">${l.memo.split(' / ')[1]}</p></td>
+                    <td class="p-4 text-right font-mono text-red-500">${l.debit}</td>
+                    <td class="p-4 text-right font-mono text-blue-500">${l.credit}</td>
+                    <td class="p-4 text-right font-mono font-bold">${l.balance}</td>
+                </tr>
+            `).join('');
+
+            const aList = document.getElementById('approval-list');
+            aList.innerHTML = sampleDocs.map(d => `
+                <div class="p-5 flex justify-between items-center hover:bg-gray-50 transition-all cursor-pointer">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400"><i data-lucide="file-text" class="w-5 h-5"></i></div>
+                        <div>
+                            <p class="font-bold text-[15px]">${d.title}</p>
+                            <p class="text-[11px] text-gray-400 mt-0.5">${d.type} · ${d.date}</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-lg text-[10px] font-black ${d.status === '결재완료' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}">${d.status}</span>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // 초기 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            renderData();
+            changeTab('approval');
+        });
     </script>
 </body>
 </html>
