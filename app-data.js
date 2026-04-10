@@ -3,7 +3,7 @@
 // 흥진파트너스 전자결재 v1.0
 // ================================================================
 
-const APP_VERSION = 'v1.0';
+const APP_VERSION = 'v1.1';
 
 // ── 유틸: SHA-256 해시 ─────────────────────────────────────────
 async function hashPw(pw) {
@@ -165,6 +165,14 @@ function enterApp() {
         document.getElementById('mob-users').classList.remove('hidden');
         document.getElementById('mob-users').classList.add('flex');
     }
+    // 테마 복원 (유저별 저장된 다크모드 설정)
+    const prefs = loadData('hj_prefs', {});
+    const userPref = prefs[currentUser.id];
+    applyTheme(userPref?.darkMode === true);
+
+    // 직인 섹션 마스터만 표시
+    applySealVisibility();
+
     updatePendingBadge();
     renderDocs();
     renderTax();

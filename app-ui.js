@@ -1,15 +1,28 @@
 // ================================================================
 // app-ui.js — UI 유틸: 탭/테마/줌/모달/세무일정
-// 흥진파트너스 전자결재 v1.0
+// 흥진파트너스 전자결재 v1.1
 // ================================================================
 
 // ── 테마 ─────────────────────────────────────────────────────
-function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    document.getElementById('theme-label').innerText = isDark ? 'Dark Mode' : 'Light Mode';
-    document.querySelectorAll('[id="theme-icon"]').forEach(el => el.setAttribute('data-lucide', isDark?'moon':'sun'));
+function applyTheme(isDark) {
+    document.body.classList.toggle('dark-mode', isDark);
+    const label = document.getElementById('theme-label');
+    if (label) label.innerText = isDark ? 'Dark Mode' : 'Light Mode';
+    document.querySelectorAll('#theme-icon, #theme-icon-mob').forEach(el => {
+        el.setAttribute('data-lucide', isDark ? 'moon' : 'sun');
+    });
     lucide.createIcons();
+}
+
+function toggleTheme() {
+    const isDark = !document.body.classList.contains('dark-mode');
+    applyTheme(isDark);
+    // 현재 유저 테마 저장
+    if (currentUser) {
+        const prefs = loadData('hj_prefs', {});
+        prefs[currentUser.id] = { ...(prefs[currentUser.id]||{}), darkMode: isDark };
+        saveData('hj_prefs', prefs);
+    }
 }
 
 // ── 탭 전환 ──────────────────────────────────────────────────
@@ -76,6 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('btn-circular');
     if (btn) btn.addEventListener('click', openCircularSetup);
 });
+
+// ── 직인 섹션: 마스터만 표시 ─────────────────────────────────
+function applySealVisibility() {
+    const sealSection = document.getElementById('seal-section');
+    if (!sealSection) return;
+    if (currentUser?.isMaster) sealSection.classList.remove('hidden');
+    else sealSection.classList.add('hidden');
+}
 
 // ── 초기화 ────────────────────────────────────────────────────
 window.addEventListener('load', async () => {

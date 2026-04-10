@@ -56,18 +56,24 @@ function renderDocs() {
 }
 
 // ── 결재라인 문서 내 렌더 ─────────────────────────────────────
+// 이미지 참고: "매니저 정석현   대표이사 김진홍" 수평 배치
+// 결재 완료 시 이름 볼드, 미결재 시 이름 숨김(직함만)
 function renderApprovalLineOnDoc(line) {
     const el = document.getElementById('w-approval-line');
     if (!line || line.length === 0) { el.innerHTML=''; return; }
 
-    // 결재라인 박스: 직함(위) / 이름(아래, 결재완료시 볼드, 미결재시 공란)
-    const cols = line.map(a => `
-        <td style="border:1px solid #bbb; text-align:center; min-width:80px; padding:0;">
-            <div style="background:#f7f7f7; border-bottom:1px solid #bbb; padding:4px 8px; font-size:10px; font-weight:700; color:#555;">${a.jobTitle || ''}</div>
-            <div style="padding:8px 6px; min-height:32px; font-size:13px; ${a.approved?'font-weight:900;':'color:transparent; user-select:none;'}">${a.approved ? a.name : '&nbsp;'}</div>
-        </td>`).join('');
+    const items = line.map(a => {
+        const nameHtml = a.approved
+            ? `<strong style="font-weight:900;">${a.name}</strong>`
+            : `<span style="visibility:hidden;">${a.name||'　'}</span>`;
+        return `<span style="margin:0 24px; font-size:14px; color:#222; white-space:nowrap;">${a.jobTitle || ''}　${nameHtml}</span>`;
+    }).join('');
 
-    el.innerHTML = `<table style="border-collapse:collapse; margin:16px auto 0;"><tr>${cols}</tr></table>`;
+    el.innerHTML = `
+        <div style="border-top:1px solid #ccc; border-bottom:1px solid #ccc; background:#f9f9f9;
+                    margin:20px 0 0; padding:10px 16px; display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+            ${items}
+        </div>`;
 }
 
 // ── 공람자 문서 내 렌더 ───────────────────────────────────────
